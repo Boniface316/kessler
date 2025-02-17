@@ -2,7 +2,7 @@
 
 # %% IMPORTS
 
-from kesslercore import scripts
+from "kessler" import scripts
 
 # %% MAIN
 

@@ -1,0 +1,6 @@
+job:
+  KIND: DummyJob
+  inputs:
+    KIND: CSVReader
+    path: data/train_data.csv
+    limit: 10
