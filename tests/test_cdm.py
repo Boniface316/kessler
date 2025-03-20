@@ -15,7 +15,7 @@ import uuid
 import os
 import numpy as np
 
-from kessler import ConjunctionDataMessage
+from original import ConjunctionDataMessage
 
 
 class CDMTestCase(unittest.TestCase):
@@ -139,7 +139,7 @@ class CDMTestCase(unittest.TestCase):
             CNDOT_NDOT                            = 0.0
             """
         file_name = os.path.join(tempfile.mkdtemp(), str(uuid.uuid4()))
-        with open(file_name, 'w') as f:
+        with open(file_name, "w") as f:
             f.write(file_content)
 
         cdm = ConjunctionDataMessage.load(file_name)
@@ -151,18 +151,26 @@ class CDMTestCase(unittest.TestCase):
 
         cdm_covariance_1 = cdm.get_covariance(0)
         cdm_covariance_2 = cdm.get_covariance(1)
-        cdm_covariance_1_correct = np.array([[3.833e+01, 9.360e+01, -1.306e+01, 0.000e+00, 0.000e+00, 0.000e+00],
-                                             [9.360e+01, 3.410e+03, 2.131e+00, 0.000e+00, 0.000e+00, 0.000e+00],
-                                             [-1.306e+01, 2.131e+00, 9.339e+01, 0.000e+00, 0.000e+00, 0.000e+00],
-                                             [0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00],
-                                             [0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00],
-                                             [0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00]])
-        cdm_covariance_2_correct = np.array([[4.087e+02, -5.350e+02, -1.721e+01, 0.000e+00, 0.000e+00, 0.000e+00],
-                                             [-5.350e+02, 7.797e+04, -7.998e+01, 0.000e+00, 0.000e+00, 0.000e+00],
-                                             [-1.721e+01, -7.998e+01, 2.399e+02, 0.000e+00, 0.000e+00, 0.000e+00],
-                                             [0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00],
-                                             [0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00],
-                                             [0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00]])
+        cdm_covariance_1_correct = np.array(
+            [
+                [3.833e01, 9.360e01, -1.306e01, 0.000e00, 0.000e00, 0.000e00],
+                [9.360e01, 3.410e03, 2.131e00, 0.000e00, 0.000e00, 0.000e00],
+                [-1.306e01, 2.131e00, 9.339e01, 0.000e00, 0.000e00, 0.000e00],
+                [0.000e00, 0.000e00, 0.000e00, 0.000e00, 0.000e00, 0.000e00],
+                [0.000e00, 0.000e00, 0.000e00, 0.000e00, 0.000e00, 0.000e00],
+                [0.000e00, 0.000e00, 0.000e00, 0.000e00, 0.000e00, 0.000e00],
+            ]
+        )
+        cdm_covariance_2_correct = np.array(
+            [
+                [4.087e02, -5.350e02, -1.721e01, 0.000e00, 0.000e00, 0.000e00],
+                [-5.350e02, 7.797e04, -7.998e01, 0.000e00, 0.000e00, 0.000e00],
+                [-1.721e01, -7.998e01, 2.399e02, 0.000e00, 0.000e00, 0.000e00],
+                [0.000e00, 0.000e00, 0.000e00, 0.000e00, 0.000e00, 0.000e00],
+                [0.000e00, 0.000e00, 0.000e00, 0.000e00, 0.000e00, 0.000e00],
+                [0.000e00, 0.000e00, 0.000e00, 0.000e00, 0.000e00, 0.000e00],
+            ]
+        )
 
         self.assertEqual(cdm_covariance_1_correct.tolist(), cdm_covariance_1.tolist())
         self.assertEqual(cdm_covariance_2_correct.tolist(), cdm_covariance_2.tolist())
