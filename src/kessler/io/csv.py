@@ -95,17 +95,19 @@ class CSVReader(Reader):
         if os.path.exists(self.path):
             data = pd.read_csv(self.path)
         else:
-            loguru.logger.info(
-                f"File not found at {self.path}. Downloading from {self.url}."
-            )
+            loguru.logger.info(f"File not found at {self.path}. Downloading from {self.url}.")
             data = self._download_data()
 
         if self.limit is not None:
             data = data.head(self.limit)
 
-        columns_to_keep = [
-            col for col in columns_to_keep if col not in non_column_names
-        ]
+        columns_to_keep = [col for col in columns_to_keep if col not in non_column_names]
+        missing_columns = [col for col in columns_to_keep if col not in data.columns]
+        if missing_columns:
+            loguru.logger.warning(
+                f"The following columns are not in the dataframe: {missing_columns}"
+            )
+        columns_to_keep = [col for col in columns_to_keep if col in data.columns]
         data = data[columns_to_keep]
         data = data.dropna()
         if self.remove_outliers:
@@ -120,9 +122,7 @@ class CSVReader(Reader):
         predictions: str | None = None,
     ) -> Lineage:
         # TODO: Confirm the lineage function output
-        return lineage.from_pandas(
-            data, name=name, targets=targets, predictions=predictions
-        )
+        return lineage.from_pandas(data, name=name, targets=targets, predictions=predictions)
 
     def _download_data(self) -> pd.DataFrame:
         """Download the dataset from the url.
