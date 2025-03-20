@@ -1,10 +1,10 @@
 import pandera.typing as papd
 
-from .example import ExampleInputsSchema as InputsSchema
-from .example import ExampleTargetsSchema as TargetsSchema
-from .example import ExampleOutputsSchema as OutputsSchema
-from .example import ExampleFeatureImportancesSchema as FeatureImportancesSchema
-from .example import ExampleSHAPValuesSchema as SHAPValuesSchema
+from .CDM_schema import InputsSchema
+from .CDM_schema import ExampleTargetsSchema as TargetsSchema
+from .CDM_schema import ExampleOutputsSchema as OutputsSchema
+from .CDM_schema import ExampleFeatureImportancesSchema as FeatureImportancesSchema
+from .CDM_schema import ExampleSHAPValuesSchema as SHAPValuesSchema
 
 Inputs = papd.DataFrame[InputsSchema]
 Targets = papd.DataFrame[TargetsSchema]

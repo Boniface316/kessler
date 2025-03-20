@@ -1,7 +1,7 @@
-from .example import ExampleReader, ExampleWriter
+from .csv import CSVReader, CSVWriter
 from .configs import Config
 
-ReaderKind = ExampleReader
-WriterKind = ExampleWriter
+ReaderKind = CSVReader
+WriterKind = CSVWriter
 
-__all__ = ["Config", "ExampleReader", "ExampleWriter"]
+__all__ = ["Config", "CSVReader", "CSVWriter"]
