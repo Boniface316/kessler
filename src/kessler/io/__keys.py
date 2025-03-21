@@ -151,3 +151,16 @@ data_covariance_obligatory = [
     "CNDOT_TDOT",
     "CNDOT_NDOT",
 ]
+
+keys_with_dates = [
+    "CREATION_DATE",
+    "TCA",
+    "SCREEN_ENTRY_TIME",
+    "START_SCREEN_PERIOD",
+    "STOP_SCREEN_PERIOD",
+    "SCREEN_EXIT_TIME",
+    "OBJECT1_TIME_LASTOB_START",
+    "OBJECT1_TIME_LASTOB_END",
+    "OBJECT2_TIME_LASTOB_START",
+    "OBJECT2_TIME_LASTOB_END",
+]
