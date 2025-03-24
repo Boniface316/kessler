@@ -8,6 +8,7 @@ import zipfile
 import io
 import loguru
 import mlflow.data.pandas_dataset as lineage
+from datetime import datetime
 
 non_column_names = [
     "index",
@@ -112,6 +113,19 @@ class CSVReader(Reader):
         data = data.dropna()
         if self.remove_outliers:
             data = self._remove_outliers(data)
+
+        data = data.sample(frac=1, axis=1).reset_index(drop=True)
+        data_by_events = data.groupby("event_id").groups
+        loguru.logger.warning(f"Number of events: {len(data_by_events)}")
+
+        if self.date_tca is None:
+            date_tca = datetime.now()
+            loguru.logger.warning(f"Using current time as TCA: {date_tca}")
+
+        if self.number_of_events is None:
+            number_of_events = len(data_by_events)
+            loguru.logger.warning(f"Using all events: {number_of_events}")
+
         return data
 
     def lineage(
@@ -159,6 +173,15 @@ class CSVReader(Reader):
         for condition in conditions:
             data = data[condition]
         return data
+
+    def kelvins_to_event_dataset(
+        file_name: str,
+        number_of_events: T.Optional[int] = None,
+        date_tca: T.Optional[str] = None,
+        remove_outliers: T.Optional[bool] = True,
+        drop_columns: T.Optional[T.List[str]] = None,
+    ):
+        pass
 
 
 class CSVWriter(Writer):
