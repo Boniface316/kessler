@@ -75,8 +75,23 @@ class ConjuctionDataMessage(BaseModel):
     def validate(self):
         pass
 
-    def key_value_notation():
-        pass
+    def key_value_notation(self):
+        ret = "\n\n"
+        ret += "\n".join([f"{k}: {v}" for k, v in self.header.items()])
+        ret += "\n\n"
+        ret += "\n".join([f"{k}: {v}" for k, v in self.relative_metadata.items()])
+        ret += "\n\n"
+        ret += "\n".join([f"{k}: {v}" for k, v in self.target_metadata.items()])
+        ret += "\n\n Target Data: \n"
+        ret += "\n".join([f"{k}: {v}" for k, v in self.target_data_od.items()])
+        ret += "\n".join([f"{k}: {v}" for k, v in self.target_data_state.items()])
+        ret += "\n".join([f"{k}: {v}" for k, v in self.target_data_covariance.items()])
+        ret += "\n\n Chaser Data: \n"
+        ret += "\n".join([f"{k}: {v}" for k, v in self.chaser_metadata.items()])
+        ret += "\n".join([f"{k}: {v}" for k, v in self.chaser_data_od.items()])
+        ret += "\n".join([f"{k}: {v}" for k, v in self.chaser_data_state.items()])
+        ret += "\n".join([f"{k}: {v}" for k, v in self.chaser_data_covariance.items()])
+        return ret
 
     def __repr__(self):
         return self.key_value_notation()
@@ -86,3 +101,6 @@ class ConjuctionDataMessage(BaseModel):
 
     def __setitem__(self, key, value):
         pass
+
+
+CDM = ConjuctionDataMessage
