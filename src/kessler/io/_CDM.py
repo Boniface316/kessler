@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from copy import deepcopy
 
 
-class ConjuctionDataMessage(BaseModel):
+class ConjuctionDataMessage(BaseModel, strict=False, frozen=False, extra="forbid"):
     header: dict
     relative_metadata: dict
 
@@ -30,8 +30,17 @@ class ConjuctionDataMessage(BaseModel):
             chaser_data_covariance=deepcopy(self.chaser_data_covariance),
         )
 
-    def copy_from_other_cdm(sefl, other_cdm):
-        pass
+    def copy_from_other_cdm(self, other_cdm):
+        self.header = deepcopy(other_cdm.header)
+        self.relative_metadata = deepcopy(other_cdm.relative_metadata)
+        self.target_metadata = deepcopy(other_cdm.target_metadata)
+        self.target_data_od = deepcopy(other_cdm.target_data_od)
+        self.target_data_state = deepcopy(other_cdm.target_data_state)
+        self.target_data_covariance = deepcopy(other_cdm.target_data_covariance)
+        self.chaser_metadata = deepcopy(other_cdm.chaser_metadata)
+        self.chaser_data_od = deepcopy(other_cdm.chaser_data_od)
+        self.chaser_data_state = deepcopy(other_cdm.chaser_data_state)
+        self.chaser_data_covariance = deepcopy(other_cdm.chaser_data_covariance)
 
     def to_dict(self):
         pass
