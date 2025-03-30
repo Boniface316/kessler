@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from copy import deepcopy
+import pandas as pd
 
 
 class ConjuctionDataMessage(BaseModel, strict=False, frozen=False, extra="forbid"):
@@ -43,10 +44,16 @@ class ConjuctionDataMessage(BaseModel, strict=False, frozen=False, extra="forbid
         self.chaser_data_covariance = deepcopy(other_cdm.chaser_data_covariance)
 
     def to_dict(self):
-        pass
+        data = {}
+
+        for k, v in self.dict().items():
+            for k2, v2 in v.items():
+                data[k2] = v2
+
+        return data
 
     def to_dataframe(self):
-        pass
+        return pd.DataFrame(self.to_dict(), index=[0])
 
     def save(self):
         pass

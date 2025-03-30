@@ -252,9 +252,9 @@ class CSVReader(Reader):
         target_data_state = self.get_state("t", single_cdm_data)
 
         chaser_metadata = self.get_object_metadata(self.OBJECT_1, single_cdm_data)
-        chaser_data_od = self.get_data_od("t", single_cdm_data, creation_date)
-        chaser_data_covariance = self.get_covariance_data("t", single_cdm_data)
-        chaser_data_state = self.get_state("t", single_cdm_data)
+        chaser_data_od = self.get_data_od("c", single_cdm_data, creation_date)
+        chaser_data_covariance = self.get_covariance_data("c", single_cdm_data)
+        chaser_data_state = self.get_state("c", single_cdm_data)
 
         return CDM(
             header=header,
@@ -382,6 +382,30 @@ class CSVReader(Reader):
                 * single_cdm_data[f"{column_prefix}_sigma_tdot"]
             ),
             f"{column_prefix}_CNDOT_NDOT": single_cdm_data[f"{column_prefix}_sigma_ndot"] ** 2.0,
+            f"{column_prefix}_CDRG_R": single_cdm_data.get(f"{column_prefix}_cdrg_r", None),
+            f"{column_prefix}_CDRG_T": single_cdm_data.get(f"{column_prefix}_cdrg_t", None),
+            f"{column_prefix}_CDRG_N": single_cdm_data.get(f"{column_prefix}_cdrg_n", None),
+            f"{column_prefix}_CDRG_RDOT": single_cdm_data.get(f"{column_prefix}_cdrg_rdot", None),
+            f"{column_prefix}_CDRG_TDOT": single_cdm_data.get(f"{column_prefix}_cdrg_tdot", None),
+            f"{column_prefix}_CDRG_NDOT": single_cdm_data.get(f"{column_prefix}_cdrg_ndot", None),
+            f"{column_prefix}_CDRG_DRG": single_cdm_data.get(f"{column_prefix}_cdrg_drg", None),
+            f"{column_prefix}_CSRP_R": single_cdm_data.get(f"{column_prefix}_csrp_r", None),
+            f"{column_prefix}_CSRP_T": single_cdm_data.get(f"{column_prefix}_csrp_t", None),
+            f"{column_prefix}_CSRP_N": single_cdm_data.get(f"{column_prefix}_csrp_n", None),
+            f"{column_prefix}_CSRP_RDOT": single_cdm_data.get(f"{column_prefix}_csrp_rdot", None),
+            f"{column_prefix}_CSRP_TDOT": single_cdm_data.get(f"{column_prefix}_csrp_tdot", None),
+            f"{column_prefix}_CSRP_NDOT": single_cdm_data.get(f"{column_prefix}_csrp_ndot", None),
+            f"{column_prefix}_CSRP_DRG": single_cdm_data.get(f"{column_prefix}_csrp_drg", None),
+            f"{column_prefix}_CSRP_SRP": single_cdm_data.get(f"{column_prefix}_csrp_srp", None),
+            f"{column_prefix}_CTHR_R": single_cdm_data.get(f"{column_prefix}_cthr_r", None),
+            f"{column_prefix}_CTHR_T": single_cdm_data.get(f"{column_prefix}_cthr_t", None),
+            f"{column_prefix}_CTHR_N": single_cdm_data.get(f"{column_prefix}_cthr_n", None),
+            f"{column_prefix}_CTHR_RDOT": single_cdm_data.get(f"{column_prefix}_cthr_rdot", None),
+            f"{column_prefix}_CTHR_TDOT": single_cdm_data.get(f"{column_prefix}_cthr_tdot", None),
+            f"{column_prefix}_CTHR_NDOT": single_cdm_data.get(f"{column_prefix}_cthr_ndot", None),
+            f"{column_prefix}_CTHR_DRG": single_cdm_data.get(f"{column_prefix}_cthr_drg", None),
+            f"{column_prefix}_CTHR_SRP": single_cdm_data.get(f"{column_prefix}_cthr_srp", None),
+            f"{column_prefix}_CTHR_THR": single_cdm_data.get(f"{column_prefix}_cthr_thr", None),
         }
 
     def get_state(self, column_prefix, single_cdm_data):
