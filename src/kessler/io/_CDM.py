@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from copy import deepcopy
 import pandas as pd
+import yaml
 
 
 class ConjuctionDataMessage(BaseModel, strict=False, frozen=False, extra="forbid"):
@@ -16,6 +17,59 @@ class ConjuctionDataMessage(BaseModel, strict=False, frozen=False, extra="forbid
     chaser_data_od: dict
     chaser_data_state: dict
     chaser_data_covariance: dict
+
+    keys_header_obligatory: list = ["CCSDS_CDM_VERS", "CREATION_DATE", "ORIGINATOR", "MESSAGE_ID"]
+    keys_relative_metadata_obligatory: list = [
+        "TCA",
+        "MISS_DISTANCE",
+    ]
+    keys_metadata_obligatory: list = [
+        "OBJECT",
+        "OBJECT_DESIGNATOR",
+        "CATALOG_NAME",
+        "OBJECT_NAME",
+        "INTERNATIONAL_DESIGNATOR",
+        "EPHEMERIS_NAME",
+        "COVARIANCE_METHOD",
+        "MANEUVERABLE",
+        "REF_FRAME",
+    ]
+    keys_data_od_obligatory: list = [
+        "TIME_LASTOB_START",
+        "TIME_LASTOB_END",
+        "RECOMMENDED_OD_SPAN",
+        "ACTUAL_OD_SPAN",
+        "OBS_AVAILABLE",
+        "OBS_USED",
+        "RESIDUALS_ACCEPTED",
+        "WEIGHTED_RMS",
+        "SEDR",
+    ]
+
+    keys_data_state_obligatory: list = ["X", "Y", "Z", "X_DOT", "Y_DOT", "Z_DOT"]
+    keys_data_covariance_obligatory: list = [
+        "CR_R",
+        "CT_R",
+        "CT_T",
+        "CN_R",
+        "CN_T",
+        "CN_N",
+        "CRDOT_R",
+        "CRDOT_T",
+        "CRDOT_N",
+        "CRDOT_RDOT",
+        "CTDOT_R",
+        "CTDOT_T",
+        "CTDOT_N",
+        "CTDOT_RDOT",
+        "CTDOT_TDOT",
+        "CNDOT_R",
+        "CNDOT_T",
+        "CNDOT_N",
+        "CNDOT_RDOT",
+        "CNDOT_TDOT",
+        "CNDOT_NDOT",
+    ]
 
     def copy(self):
         return ConjuctionDataMessage(
@@ -55,8 +109,67 @@ class ConjuctionDataMessage(BaseModel, strict=False, frozen=False, extra="forbid
     def to_dataframe(self):
         return pd.DataFrame(self.to_dict(), index=[0])
 
-    def save(self):
-        pass
+    def load(self, file_name):
+        # Load the YAML file
+        with open(file_name, "r") as file:
+            data = yaml.safe_load(file)
+
+        # Convert the loaded data to the appropriate format
+        for section, content in data.items():
+            if section == "Header":
+                header = content
+            elif section == "Metadata":
+                relative_metadata = content
+            elif section == "Target_metadata":
+                target_metadata = content
+            elif section == "Target_data_od":
+                target_data_od = content
+            elif section == "Target_data_state":
+                target_data_state = content
+            elif section == "Target_data_covariance":
+                target_data_covariance = content
+            elif section == "Chaser_metadata":
+                chaser_metadata = content
+            elif section == "Chaser_data_od":
+                chaser_data_od = content
+            elif section == "Chaser_data_state":
+                chaser_data_state = content
+            elif section == "Chaser_data_covariance":
+                chaser_data_covariance = content
+
+        return ConjuctionDataMessage(
+            header=header,
+            relative_metadata=relative_metadata,
+            target_metadata=target_metadata,
+            target_data_od=target_data_od,
+            target_data_state=target_data_state,
+            target_data_covariance=target_data_covariance,
+            chaser_metadata=chaser_metadata,
+            chaser_data_od=chaser_data_od,
+            chaser_data_state=chaser_data_state,
+            chaser_data_covariance=chaser_data_covariance,
+        )
+
+    def save(self, file_name):
+        content = self.key_value_notation()
+        data = {}
+        current_section = None
+        for line in content.splitlines():
+            if line.endswith(":"):  # Section header
+                current_section = line[:-1]
+                data[current_section] = {}
+            elif current_section and ": " in line:  # Key-value pair
+                key, value = line.strip().split(": ", 1)
+                # Convert "None" to null and numeric strings to numbers
+                if value == "None":
+                    value = None
+                elif value.replace(".", "", 1).isdigit():
+                    value = float(value) if "." in value else int(value)
+                data[current_section][key] = value
+
+        # Use PyYAML to save the dictionary as YAML
+        with open(file_name, "w") as file:
+            yaml.dump(data, file, default_flow_style=False, sort_keys=False)
 
     def __hash__(self):
         pass
@@ -103,22 +216,91 @@ class ConjuctionDataMessage(BaseModel, strict=False, frozen=False, extra="forbid
     def validate(self):
         pass
 
+    def _filter_obligatory_items(self, return_string, items_dict, keys_obligatory, show_all=False):
+        """
+        Filter the keys to only include the obligatory ones.
+        """
+        for k, v in items_dict.items():
+            if v is None:
+                if show_all or k in keys_obligatory:
+                    return_string += f" {k}: None\n"
+            else:
+                return_string += f" {k}: {v}\n"
+        return return_string
+
     def key_value_notation(self):
-        ret = "\n\n"
-        ret += "\n".join([f"{k}: {v}" for k, v in self.header.items()])
-        ret += "\n\n"
-        ret += "\n".join([f"{k}: {v}" for k, v in self.relative_metadata.items()])
-        ret += "\n\n"
-        ret += "\n".join([f"{k}: {v}" for k, v in self.target_metadata.items()])
-        ret += "\n\n Target Data: \n"
-        ret += "\n".join([f"{k}: {v}" for k, v in self.target_data_od.items()])
-        ret += "\n".join([f"{k}: {v}" for k, v in self.target_data_state.items()])
-        ret += "\n".join([f"{k}: {v}" for k, v in self.target_data_covariance.items()])
-        ret += "\n\n Chaser Data: \n"
-        ret += "\n".join([f"{k}: {v}" for k, v in self.chaser_metadata.items()])
-        ret += "\n".join([f"{k}: {v}" for k, v in self.chaser_data_od.items()])
-        ret += "\n".join([f"{k}: {v}" for k, v in self.chaser_data_state.items()])
-        ret += "\n".join([f"{k}: {v}" for k, v in self.chaser_data_covariance.items()])
+        ret = ""
+        ret += "Header:\n"
+        ret = self._filter_obligatory_items(
+            ret,
+            self.header,
+            self.keys_header_obligatory,
+            show_all=False,
+        )
+        ret += "Metadata:\n"
+        ret = self._filter_obligatory_items(
+            ret,
+            self.relative_metadata,
+            self.keys_relative_metadata_obligatory,
+            show_all=False,
+        )
+        ret += "Target_metadata:\n"
+        ret = self._filter_obligatory_items(
+            ret,
+            self.target_metadata,
+            self.keys_metadata_obligatory,
+            show_all=False,
+        )
+        ret += "Target_data_od:\n"
+        ret = self._filter_obligatory_items(
+            ret,
+            self.target_data_od,
+            self.keys_data_od_obligatory,
+            show_all=False,
+        )
+        ret += "Target_data_state:\n"
+        ret = self._filter_obligatory_items(
+            ret,
+            self.target_data_state,
+            self.keys_data_state_obligatory,
+            show_all=False,
+        )
+        ret += "Target_data_covariance:\n"
+        ret = self._filter_obligatory_items(
+            ret,
+            self.target_data_covariance,
+            self.keys_data_covariance_obligatory,
+            show_all=False,
+        )
+        ret += "Chaser_metadata:\n"
+        ret = self._filter_obligatory_items(
+            ret,
+            self.chaser_metadata,
+            self.keys_metadata_obligatory,
+            show_all=False,
+        )
+        ret += "Chaser_data_od:\n"
+        ret = self._filter_obligatory_items(
+            ret,
+            self.chaser_data_od,
+            self.keys_data_od_obligatory,
+            show_all=False,
+        )
+        ret += "Chaser_data_state:\n"
+        ret = self._filter_obligatory_items(
+            ret,
+            self.chaser_data_state,
+            self.keys_data_state_obligatory,
+            show_all=False,
+        )
+        ret += "Chaser_data_covariance:\n"
+        ret = self._filter_obligatory_items(
+            ret,
+            self.chaser_data_covariance,
+            self.keys_data_covariance_obligatory,
+            show_all=False,
+        )
+
         return ret
 
     def __repr__(self):

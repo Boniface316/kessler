@@ -251,8 +251,8 @@ class CSVReader(Reader):
         target_data_covariance = self.get_covariance_data("t", single_cdm_data)
         target_data_state = self.get_state("t", single_cdm_data)
 
-        chaser_metadata = self.get_object_metadata(self.OBJECT_1, single_cdm_data)
-        chaser_data_od = self.get_data_od("c", single_cdm_data, creation_date)
+        chaser_metadata = self.get_object_metadata(self.OBJECT_2, single_cdm_data)
+        chaser_data_od = self.get_data_od("t", single_cdm_data, creation_date)
         chaser_data_covariance = self.get_covariance_data("c", single_cdm_data)
         chaser_data_state = self.get_state("c", single_cdm_data)
 
@@ -301,111 +301,111 @@ class CSVReader(Reader):
 
     def get_covariance_data(self, column_prefix, single_cdm_data):
         return {
-            f"{column_prefix}_CR_R": single_cdm_data[f"{column_prefix}_sigma_r"] ** 2.0,
-            f"{column_prefix}_CT_R": (
+            "CR_R": single_cdm_data[f"{column_prefix}_sigma_r"] ** 2.0,
+            "CT_R": (
                 single_cdm_data[f"{column_prefix}_ct_r"]
                 * single_cdm_data[f"{column_prefix}_sigma_r"]
                 * single_cdm_data[f"{column_prefix}_sigma_t"]
             ),
-            f"{column_prefix}_CT_T": single_cdm_data[f"{column_prefix}_sigma_t"] ** 2.0,
-            f"{column_prefix}_CN_R": (
+            "CT_T": single_cdm_data[f"{column_prefix}_sigma_t"] ** 2.0,
+            "CN_R": (
                 single_cdm_data[f"{column_prefix}_cn_r"]
                 * single_cdm_data[f"{column_prefix}_sigma_n"]
                 * single_cdm_data[f"{column_prefix}_sigma_r"]
             ),
-            f"{column_prefix}_CN_T": (
+            "CN_T": (
                 single_cdm_data[f"{column_prefix}_cn_t"]
                 * single_cdm_data[f"{column_prefix}_sigma_n"]
                 * single_cdm_data[f"{column_prefix}_sigma_t"]
             ),
-            f"{column_prefix}_CN_N": single_cdm_data[f"{column_prefix}_sigma_n"] ** 2.0,
-            f"{column_prefix}_CRDOT_R": (
+            "CN_N": single_cdm_data[f"{column_prefix}_sigma_n"] ** 2.0,
+            "CRDOT_R": (
                 single_cdm_data[f"{column_prefix}_crdot_r"]
                 * single_cdm_data[f"{column_prefix}_sigma_rdot"]
                 * single_cdm_data[f"{column_prefix}_sigma_r"]
             ),
-            f"{column_prefix}_CRDOT_T": (
+            "CRDOT_T": (
                 single_cdm_data[f"{column_prefix}_crdot_t"]
                 * single_cdm_data[f"{column_prefix}_sigma_rdot"]
                 * single_cdm_data[f"{column_prefix}_sigma_t"]
             ),
-            f"{column_prefix}_CRDOT_N": (
+            "CRDOT_N": (
                 single_cdm_data[f"{column_prefix}_crdot_n"]
                 * single_cdm_data[f"{column_prefix}_sigma_rdot"]
                 * single_cdm_data[f"{column_prefix}_sigma_n"]
             ),
-            f"{column_prefix}_CRDOT_RDOT": single_cdm_data[f"{column_prefix}_sigma_rdot"] ** 2.0,
-            f"{column_prefix}_CTDOT_R": (
+            "CRDOT_RDOT": single_cdm_data[f"{column_prefix}_sigma_rdot"] ** 2.0,
+            "CTDOT_R": (
                 single_cdm_data[f"{column_prefix}_ctdot_r"]
                 * single_cdm_data[f"{column_prefix}_sigma_tdot"]
                 * single_cdm_data[f"{column_prefix}_sigma_r"]
             ),
-            f"{column_prefix}_CTDOT_T": (
+            "CTDOT_T": (
                 single_cdm_data[f"{column_prefix}_ctdot_t"]
                 * single_cdm_data[f"{column_prefix}_sigma_tdot"]
                 * single_cdm_data[f"{column_prefix}_sigma_t"]
             ),
-            f"{column_prefix}_CTDOT_N": (
+            "CTDOT_N": (
                 single_cdm_data[f"{column_prefix}_ctdot_n"]
                 * single_cdm_data[f"{column_prefix}_sigma_tdot"]
                 * single_cdm_data[f"{column_prefix}_sigma_n"]
             ),
-            f"{column_prefix}_CTDOT_RDOT": (
+            "CTDOT_RDOT": (
                 single_cdm_data[f"{column_prefix}_ctdot_rdot"]
                 * single_cdm_data[f"{column_prefix}_sigma_tdot"]
                 * single_cdm_data[f"{column_prefix}_sigma_rdot"]
             ),
-            f"{column_prefix}_CTDOT_TDOT": single_cdm_data[f"{column_prefix}_sigma_tdot"] ** 2.0,
-            f"{column_prefix}_CNDOT_R": (
+            "CTDOT_TDOT": single_cdm_data[f"{column_prefix}_sigma_tdot"] ** 2.0,
+            "CNDOT_R": (
                 single_cdm_data[f"{column_prefix}_cndot_r"]
                 * single_cdm_data[f"{column_prefix}_sigma_ndot"]
                 * single_cdm_data[f"{column_prefix}_sigma_r"]
             ),
-            f"{column_prefix}_CNDOT_T": (
+            "CNDOT_T": (
                 single_cdm_data[f"{column_prefix}_cndot_t"]
                 * single_cdm_data[f"{column_prefix}_sigma_ndot"]
                 * single_cdm_data[f"{column_prefix}_sigma_t"]
             ),
-            f"{column_prefix}_CNDOT_N": (
+            "CNDOT_N": (
                 single_cdm_data[f"{column_prefix}_cndot_n"]
                 * single_cdm_data[f"{column_prefix}_sigma_ndot"]
                 * single_cdm_data[f"{column_prefix}_sigma_n"]
             ),
-            f"{column_prefix}_CNDOT_RDOT": (
+            "CNDOT_RDOT": (
                 single_cdm_data[f"{column_prefix}_cndot_rdot"]
                 * single_cdm_data[f"{column_prefix}_sigma_ndot"]
                 * single_cdm_data[f"{column_prefix}_sigma_rdot"]
             ),
-            f"{column_prefix}_CNDOT_TDOT": (
+            "CNDOT_TDOT": (
                 single_cdm_data[f"{column_prefix}_cndot_tdot"]
                 * single_cdm_data[f"{column_prefix}_sigma_ndot"]
                 * single_cdm_data[f"{column_prefix}_sigma_tdot"]
             ),
-            f"{column_prefix}_CNDOT_NDOT": single_cdm_data[f"{column_prefix}_sigma_ndot"] ** 2.0,
-            f"{column_prefix}_CDRG_R": single_cdm_data.get(f"{column_prefix}_cdrg_r", None),
-            f"{column_prefix}_CDRG_T": single_cdm_data.get(f"{column_prefix}_cdrg_t", None),
-            f"{column_prefix}_CDRG_N": single_cdm_data.get(f"{column_prefix}_cdrg_n", None),
-            f"{column_prefix}_CDRG_RDOT": single_cdm_data.get(f"{column_prefix}_cdrg_rdot", None),
-            f"{column_prefix}_CDRG_TDOT": single_cdm_data.get(f"{column_prefix}_cdrg_tdot", None),
-            f"{column_prefix}_CDRG_NDOT": single_cdm_data.get(f"{column_prefix}_cdrg_ndot", None),
-            f"{column_prefix}_CDRG_DRG": single_cdm_data.get(f"{column_prefix}_cdrg_drg", None),
-            f"{column_prefix}_CSRP_R": single_cdm_data.get(f"{column_prefix}_csrp_r", None),
-            f"{column_prefix}_CSRP_T": single_cdm_data.get(f"{column_prefix}_csrp_t", None),
-            f"{column_prefix}_CSRP_N": single_cdm_data.get(f"{column_prefix}_csrp_n", None),
-            f"{column_prefix}_CSRP_RDOT": single_cdm_data.get(f"{column_prefix}_csrp_rdot", None),
-            f"{column_prefix}_CSRP_TDOT": single_cdm_data.get(f"{column_prefix}_csrp_tdot", None),
-            f"{column_prefix}_CSRP_NDOT": single_cdm_data.get(f"{column_prefix}_csrp_ndot", None),
-            f"{column_prefix}_CSRP_DRG": single_cdm_data.get(f"{column_prefix}_csrp_drg", None),
-            f"{column_prefix}_CSRP_SRP": single_cdm_data.get(f"{column_prefix}_csrp_srp", None),
-            f"{column_prefix}_CTHR_R": single_cdm_data.get(f"{column_prefix}_cthr_r", None),
-            f"{column_prefix}_CTHR_T": single_cdm_data.get(f"{column_prefix}_cthr_t", None),
-            f"{column_prefix}_CTHR_N": single_cdm_data.get(f"{column_prefix}_cthr_n", None),
-            f"{column_prefix}_CTHR_RDOT": single_cdm_data.get(f"{column_prefix}_cthr_rdot", None),
-            f"{column_prefix}_CTHR_TDOT": single_cdm_data.get(f"{column_prefix}_cthr_tdot", None),
-            f"{column_prefix}_CTHR_NDOT": single_cdm_data.get(f"{column_prefix}_cthr_ndot", None),
-            f"{column_prefix}_CTHR_DRG": single_cdm_data.get(f"{column_prefix}_cthr_drg", None),
-            f"{column_prefix}_CTHR_SRP": single_cdm_data.get(f"{column_prefix}_cthr_srp", None),
-            f"{column_prefix}_CTHR_THR": single_cdm_data.get(f"{column_prefix}_cthr_thr", None),
+            "CNDOT_NDOT": single_cdm_data[f"{column_prefix}_sigma_ndot"] ** 2.0,
+            "CDRG_R": single_cdm_data.get(f"{column_prefix}_cdrg_r", None),
+            "CDRG_T": single_cdm_data.get(f"{column_prefix}_cdrg_t", None),
+            "CDRG_N": single_cdm_data.get(f"{column_prefix}_cdrg_n", None),
+            "CDRG_RDOT": single_cdm_data.get(f"{column_prefix}_cdrg_rdot", None),
+            "CDRG_TDOT": single_cdm_data.get(f"{column_prefix}_cdrg_tdot", None),
+            "CDRG_NDOT": single_cdm_data.get(f"{column_prefix}_cdrg_ndot", None),
+            "CDRG_DRG": single_cdm_data.get(f"{column_prefix}_cdrg_drg", None),
+            "CSRP_R": single_cdm_data.get(f"{column_prefix}_csrp_r", None),
+            "CSRP_T": single_cdm_data.get(f"{column_prefix}_csrp_t", None),
+            "CSRP_N": single_cdm_data.get(f"{column_prefix}_csrp_n", None),
+            "CSRP_RDOT": single_cdm_data.get(f"{column_prefix}_csrp_rdot", None),
+            "CSRP_TDOT": single_cdm_data.get(f"{column_prefix}_csrp_tdot", None),
+            "CSRP_NDOT": single_cdm_data.get(f"{column_prefix}_csrp_ndot", None),
+            "CSRP_DRG": single_cdm_data.get(f"{column_prefix}_csrp_drg", None),
+            "CSRP_SRP": single_cdm_data.get(f"{column_prefix}_csrp_srp", None),
+            "CTHR_R": single_cdm_data.get(f"{column_prefix}_cthr_r", None),
+            "CTHR_T": single_cdm_data.get(f"{column_prefix}_cthr_t", None),
+            "CTHR_N": single_cdm_data.get(f"{column_prefix}_cthr_n", None),
+            "CTHR_RDOT": single_cdm_data.get(f"{column_prefix}_cthr_rdot", None),
+            "CTHR_TDOT": single_cdm_data.get(f"{column_prefix}_cthr_tdot", None),
+            "CTHR_NDOT": single_cdm_data.get(f"{column_prefix}_cthr_ndot", None),
+            "CTHR_DRG": single_cdm_data.get(f"{column_prefix}_cthr_drg", None),
+            "CTHR_SRP": single_cdm_data.get(f"{column_prefix}_cthr_srp", None),
+            "CTHR_THR": single_cdm_data.get(f"{column_prefix}_cthr_thr", None),
         }
 
     def get_state(self, column_prefix, single_cdm_data):
