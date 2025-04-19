@@ -309,8 +309,40 @@ class ConjuctionDataMessage(BaseModel, strict=False, frozen=False, extra="forbid
     def __getitem__(self, key):
         return self.to_dict()[key]
 
-    def __setitem__(self, key, value):
-        pass
+    def __setitem__(self, key, value: str | dict):
+        if isinstance(value, dict):
+            object = value.get("object", None)
+            key = value.get("key", None)
+            value = value.get("value", None)
+
+            if object == "target":
+                if key in self.target_metadata.keys():
+                    self.target_metadata[key] = value
+                elif key in self.target_data_od.keys():
+                    self.target_data_od[key] = value
+                elif key in self.target_data_state.keys():
+                    self.target_data_state[key] = value
+                elif key in self.target_data_covariance.keys():
+                    self.target_data_covariance[key] = value
+            elif object == "chaser":
+                if key in self.chaser_metadata.keys():
+                    self.chaser_metadata[key] = value
+                elif key in self.chaser_data_od.keys():
+                    self.chaser_data_od[key] = value
+                elif key in self.chaser_data_state.keys():
+                    self.chaser_data_state[key] = value
+                elif key in self.chaser_data_covariance.keys():
+                    self.chaser_data_covariance[key] = value
+            else:
+                raise KeyError(f"Key {key} not found in target or chaser.")
+
+        else:
+            if key in self.header.keys():
+                self.header[key] = value
+            elif key in self.relative_metadata.keys():
+                self.relative_metadata[key] = value
+            else:
+                raise KeyError(f"Key {key} not found in header or relative_metadata.")
 
 
 CDM = ConjuctionDataMessage
