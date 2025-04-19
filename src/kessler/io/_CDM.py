@@ -100,9 +100,29 @@ class ConjuctionDataMessage(BaseModel, strict=False, frozen=False, extra="forbid
     def to_dict(self):
         data = {}
 
-        for k, v in self.dict().items():
+        dict_names = [
+            "header",
+            "relative_metadata",
+            "target_metadata",
+            "target_data_od",
+            "target_data_state",
+            "target_data_covariance",
+            "chaser_metadata",
+            "chaser_data_od",
+            "chaser_data_state",
+            "chaser_data_covariance",
+        ]
+
+        for dict_name in dict_names:
+            v = getattr(self, dict_name)
+            if dict_name.startswith("target"):
+                prefix = "t_"
+            elif dict_name.startswith("chaser"):
+                prefix = "c_"
+            else:
+                prefix = ""
             for k2, v2 in v.items():
-                data[k2] = v2
+                data[prefix + k2] = v2
 
         return data
 
