@@ -18,7 +18,12 @@ class ConjuctionDataMessage(BaseModel, strict=False, frozen=False, extra="forbid
     chaser_data_state: dict
     chaser_data_covariance: dict
 
-    keys_header_obligatory: list = ["CCSDS_CDM_VERS", "CREATION_DATE", "ORIGINATOR", "MESSAGE_ID"]
+    keys_header_obligatory: list = [
+        "CCSDS_CDM_VERS",
+        "CREATION_DATE",
+        "ORIGINATOR",
+        "MESSAGE_ID",
+    ]
     keys_relative_metadata_obligatory: list = [
         "TCA",
         "MISS_DISTANCE",
@@ -236,7 +241,9 @@ class ConjuctionDataMessage(BaseModel, strict=False, frozen=False, extra="forbid
     def validate(self):
         pass
 
-    def _filter_obligatory_items(self, return_string, items_dict, keys_obligatory, show_all=False):
+    def _filter_obligatory_items(
+        self, return_string, items_dict, keys_obligatory, show_all=False
+    ):
         """
         Filter the keys to only include the obligatory ones.
         """
@@ -327,7 +334,7 @@ class ConjuctionDataMessage(BaseModel, strict=False, frozen=False, extra="forbid
         return self.key_value_notation()
 
     def __getitem__(self, key):
-        return self.to_dict()[key]
+        return self.to_dict().get(key, None)
 
     def __setitem__(self, key, value: str | dict):
         if isinstance(value, dict):
