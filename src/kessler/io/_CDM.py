@@ -1,7 +1,10 @@
 from pydantic import BaseModel
 from copy import deepcopy
 import pandas as pd
+import numpy as np
 import yaml
+from datetime import datetime, timedelta
+import loguru
 
 
 class ConjuctionDataMessage(BaseModel, strict=False, frozen=False, extra="forbid"):
@@ -196,142 +199,503 @@ class ConjuctionDataMessage(BaseModel, strict=False, frozen=False, extra="forbid
         with open(file_name, "w") as file:
             yaml.dump(data, file, default_flow_style=False, sort_keys=False)
 
-    def __hash__(self):
-        pass
-
-    def __eq__(self, value):
-        pass
-
     def set_header(self, key, value):
-        pass
+        if key == "CREATION_DATE":
+            time_format = self.__get_ccsds_time_format(value)
+            idx = time_format.find("DDD")
+            if idx != -1:
+                value = self.__doy_2_date(value, value[idx : idx + 3], value[:4], idx)
+            try:
+                datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f")
+            except ValueError as e:
+                raise RuntimeError(
+                    f"{key} ({value}) is not in the expected format.\n{str(e)}"
+                )
+        self.header[key] = value
 
     def set_relative_metadata(self, key, value):
-        pass
+        if key in self.relative_metadata.keys():
+            self.relative_metadata[key] = value
+        else:
+            raise ValueError("Invalid key ({}) for relative metadata".format(key))
 
-    def set_object(self, key, value):
-        pass
+    def set_object(self, object, key, value):
+        self._object_validation(object)
 
-    def get_object(self, object_id, key):
-        pass
+        if object == self.target_metadata.get("OBJECT"):
+            if key in self.target_metadata.keys():
+                self.target_metadata[key] = value
+            elif key in self.target_data_od.keys():
+                self.target_data_od[key] = value
+            elif key in self.target_data_state.keys():
+                self.target_data_state[key] = value
+            elif key in self.target_data_covariance.keys():
+                self.target_data_covariance[key] = value
+        else:
+            if key in self.chaser_metadata.keys():
+                self.chaser_metadata[key] = value
+            elif key in self.chaser_data_od.keys():
+                self.chaser_data_od[key] = value
+            elif key in self.chaser_data_state.keys():
+                self.chaser_data_state[key] = value
+            elif key in self.chaser_data_covariance.keys():
+                self.chaser_data_covariance[key] = value
+
+    def set_state(self, object, state):
+        self.set_object(object, "X", state[0, 0])
+        self.set_object(object, "Y", state[0, 1])
+        self.set_object(object, "Z", state[0, 2])
+        self.set_object(object, "X_DOT", state[1, 0])
+        self.set_object(object, "Y_DOT", state[1, 1])
+        self.set_object(object, "Z_DOT", state[1, 2])
+        self._update_miss_distance()
+        self._update_state_relative()
+
+    def set_covariance(self, object, covariance_matrix):
+        self.set_object(object, "CR_R", covariance_matrix[0, 0])
+        self.set_object(object, "CT_R", covariance_matrix[1, 0])
+        self.set_object(object, "CT_T", covariance_matrix[1, 1])
+        self.set_object(object, "CN_R", covariance_matrix[2, 0])
+        self.set_object(object, "CN_T", covariance_matrix[2, 1])
+        self.set_object(object, "CN_N", covariance_matrix[2, 2])
+        self.set_object(object, "CRDOT_R", covariance_matrix[3, 0])
+        self.set_object(object, "CRDOT_T", covariance_matrix[3, 1])
+        self.set_object(object, "CRDOT_N", covariance_matrix[3, 2])
+        self.set_object(object, "CRDOT_RDOT", covariance_matrix[3, 3])
+        self.set_object(object, "CTDOT_R", covariance_matrix[4, 0])
+        self.set_object(object, "CTDOT_T", covariance_matrix[4, 1])
+        self.set_object(object, "CTDOT_N", covariance_matrix[4, 2])
+        self.set_object(object, "CTDOT_RDOT", covariance_matrix[4, 3])
+        self.set_object(object, "CTDOT_TDOT", covariance_matrix[4, 4])
+        self.set_object(object, "CNDOT_R", covariance_matrix[5, 0])
+        self.set_object(object, "CNDOT_T", covariance_matrix[5, 1])
+        self.set_object(object, "CNDOT_N", covariance_matrix[5, 2])
+        self.set_object(object, "CNDOT_RDOT", covariance_matrix[5, 3])
+        self.set_object(object, "CNDOT_TDOT", covariance_matrix[5, 4])
+        self.set_object(object, "CNDOT_NDOT", covariance_matrix[5, 5])
+
+    def get_object(self, object, key):
+        self._object_validation(object)
+        if object == self.target_metadata.get("OBJECT"):
+            prefix = "t_"
+        else:
+            prefix = "c_"
+
+        data = self.to_dict()
+        return data.get(prefix + key, None)
 
     def get_relative_metadata(self, key):
-        pass
+        if key in self.relative_metadata.keys():
+            return self.relative_metadata[key]
+        else:
+            raise KeyError(f"Key {key} not found in relative metadata.")
 
-    def set_state(self, object_id, state):
-        pass
-
-    def _update_miss_distance(self):
-        pass
-
-    def _update_state_relative(self):
-        pass
+    def get_state(self, object):
+        state = np.zeros([2, 3])
+        state[0, 0] = self.get_object(object, "X")
+        state[0, 1] = self.get_object(object, "Y")
+        state[0, 2] = self.get_object(object, "Z")
+        state[1, 0] = self.get_object(object, "X_DOT")
+        state[1, 1] = self.get_object(object, "Y_DOT")
+        state[1, 2] = self.get_object(object, "Z_DOT")
+        return state
 
     def get_state_relative(self):
-        pass
+        relative_state = np.zeros([2, 3])
+        relative_state[0, 0] = self.get_relative_metadata("RELATIVE_POSITION_R")
+        relative_state[0, 1] = self.get_relative_metadata("RELATIVE_POSITION_T")
+        relative_state[0, 2] = self.get_relative_metadata("RELATIVE_POSITION_N")
+        relative_state[1, 0] = self.get_relative_metadata("RELATIVE_VELOCITY_R")
+        relative_state[1, 1] = self.get_relative_metadata("RELATIVE_VELOCITY_T")
+        relative_state[1, 2] = self.get_relative_metadata("RELATIVE_VELOCITY_N")
+        return relative_state
 
-    def get_state(self, object_id):
-        pass
+    def get_covariance(self, object):
+        covariance = np.zeros([6, 6])
+        covariance[0, 0] = self.get_object(object, "CR_R")
+        covariance[1, 0] = self.get_object(object, "CT_R")
+        covariance[1, 1] = self.get_object(object, "CT_T")
+        covariance[2, 0] = self.get_object(object, "CN_R")
+        covariance[2, 1] = self.get_object(object, "CN_T")
+        covariance[2, 2] = self.get_object(object, "CN_N")
+        covariance[3, 0] = self.get_object(object, "CRDOT_R")
+        covariance[3, 1] = self.get_object(object, "CRDOT_T")
+        covariance[3, 2] = self.get_object(object, "CRDOT_N")
+        covariance[3, 3] = self.get_object(object, "CRDOT_RDOT")
+        covariance[4, 0] = self.get_object(object, "CTDOT_R")
+        covariance[4, 1] = self.get_object(object, "CTDOT_T")
+        covariance[4, 2] = self.get_object(object, "CTDOT_N")
+        covariance[4, 3] = self.get_object(object, "CTDOT_RDOT")
+        covariance[4, 4] = self.get_object(object, "CTDOT_TDOT")
+        covariance[5, 0] = self.get_object(object, "CNDOT_R")
+        covariance[5, 1] = self.get_object(object, "CNDOT_T")
+        covariance[5, 2] = self.get_object(object, "CNDOT_N")
+        covariance[5, 3] = self.get_object(object, "CNDOT_RDOT")
+        covariance[5, 4] = self.get_object(object, "CNDOT_TDOT")
+        covariance[5, 5] = self.get_object(object, "CNDOT_NDOT")
+        # Copies lower triangle to the upper part
+        covariance = covariance + covariance.T - np.diag(np.diag(covariance))
+        return covariance
 
-    def get_covariance(self, object_id):
-        pass
+    def _object_validation(self, object):
+        if object not in [
+            self.target_metadata.get("OBJECT"),
+            self.chaser_metadata.get("OBJECT"),
+        ]:
+            raise ValueError(
+                f"Invalid object {object}. Make sure it matches with object metadata."
+            )
 
-    def set_covariance(self, object_id, covariance):
-        pass
+    def _get_state_objects(self):
+        state_object1 = self.get_state(self.target_metadata.get("OBJECT"))
+        state_object2 = self.get_state(self.chaser_metadata.get("OBJECT"))
+        for idx, state_object in enumerate([state_object1, state_object2], start=1):
+            object_name = (
+                self.target_metadata.get("OBJECT")
+                if idx == 1
+                else self.chaser_metadata.get("OBJECT")
+            )
+            if np.isnan(state_object.sum()):
+                loguru.logger.warning(f"{object_name} has NaN values in its state.")
+        return state_object1, state_object2
+
+    def _update_miss_distance(self):
+        state_object1, state_object2 = self._get_state_objects()
+        miss_distance = np.linalg.norm(state_object1[0] - state_object2[0])
+        self.set_relative_metadata("MISS_DISTANCE", miss_distance)
+
+    def _update_state_relative(self):
+        state_object1, state_object2 = self._get_state_objects()
+        relative_state = self._relative_state_between_objects(
+            state_object1, state_object2
+        )
+        self.set_relative_metadata("RELATIVE_POSITION_R", relative_state[0, 0])
+        self.set_relative_metadata("RELATIVE_POSITION_T", relative_state[0, 1])
+        self.set_relative_metadata("RELATIVE_POSITION_N", relative_state[0, 2])
+        self.set_relative_metadata("RELATIVE_VELOCITY_R", relative_state[1, 0])
+        self.set_relative_metadata("RELATIVE_VELOCITY_T", relative_state[1, 1])
+        self.set_relative_metadata("RELATIVE_VELOCITY_N", relative_state[1, 2])
+        self.set_relative_metadata("RELATIVE_SPEED", np.linalg.norm(relative_state[1]))
+
+    def __uvw_matrix(self, r, v):
+        u = r / np.linalg.norm(r)
+        w = np.cross(r, v)
+        w = w / np.linalg.norm(w)
+        v = np.cross(w, u)
+        return np.vstack((u, v, w))
+
+    def _relative_state_between_objects(self, state_obj_1, state_obj_2):
+        rot_matrix = self.__uvw_matrix(state_obj_1[0], state_obj_1[1])
+        rel_position_xyz = state_obj_2[0] - state_obj_1[0]
+        rel_velocity_xyz = state_obj_2[1] - state_obj_1[1]
+        relative_state = np.zeros([2, 3])
+        relative_state[0] = np.array(
+            [
+                np.dot(rot_matrix[0], rel_position_xyz),
+                np.dot(rot_matrix[1], rel_position_xyz),
+                np.dot(rot_matrix[2], rel_position_xyz),
+            ]
+        )
+        relative_state[1] = np.array(
+            [
+                np.dot(rot_matrix[0], rel_velocity_xyz),
+                np.dot(rot_matrix[1], rel_velocity_xyz),
+                np.dot(rot_matrix[2], rel_velocity_xyz),
+            ]
+        )
+        return relative_state
 
     def validate(self):
-        pass
+        header_missing_keys = self._validate_or_filter_obligatory_items(
+            "",
+            self.header,
+            self.keys_header_obligatory,
+            return_missing_keys=True,
+        )
+        loguru.logger.info(f"Header missing keys: {header_missing_keys}")
+        metadata_missing_keys = self._validate_or_filter_obligatory_items(
+            "",
+            self.relative_metadata,
+            self.keys_relative_metadata_obligatory,
+            return_missing_keys=True,
+        )
+        loguru.logger.info(f"Metadata missing keys: {metadata_missing_keys}")
+        target_metadata_missing_keys = self._validate_or_filter_obligatory_items(
+            "",
+            self.target_metadata,
+            self.keys_metadata_obligatory,
+            return_missing_keys=True,
+        )
+        loguru.logger.info(
+            f"Target metadata missing keys: {target_metadata_missing_keys}"
+        )
+        target_data_od_missing_keys = self._validate_or_filter_obligatory_items(
+            "",
+            self.target_data_od,
+            self.keys_data_od_obligatory,
+            return_missing_keys=True,
+        )
+        loguru.logger.info(
+            f"Target data od missing keys: {target_data_od_missing_keys}"
+        )
+        target_data_state_missing_keys = self._validate_or_filter_obligatory_items(
+            "",
+            self.target_data_state,
+            self.keys_data_state_obligatory,
+            return_missing_keys=True,
+        )
+        loguru.logger.info(
+            f"Target data state missing keys: {target_data_state_missing_keys}"
+        )
+        target_data_covariance_missing_keys = self._validate_or_filter_obligatory_items(
+            "",
+            self.target_data_covariance,
+            self.keys_data_covariance_obligatory,
+            return_missing_keys=True,
+        )
+        loguru.logger.info(
+            f"Target data covariance missing keys: {target_data_covariance_missing_keys}"
+        )
+        chaser_metadata_missing_keys = self._validate_or_filter_obligatory_items(
+            "",
+            self.chaser_metadata,
+            self.keys_metadata_obligatory,
+            return_missing_keys=True,
+        )
+        loguru.logger.info(
+            f"Chaser metadata missing keys: {chaser_metadata_missing_keys}"
+        )
+        chaser_data_od_missing_keys = self._validate_or_filter_obligatory_items(
+            "",
+            self.chaser_data_od,
+            self.keys_data_od_obligatory,
+            return_missing_keys=True,
+        )
+        loguru.logger.info(
+            f"Chaser data od missing keys: {chaser_data_od_missing_keys}"
+        )
+        chaser_data_state_missing_keys = self._validate_or_filter_obligatory_items(
+            "",
+            self.chaser_data_state,
+            self.keys_data_state_obligatory,
+            return_missing_keys=True,
+        )
+        loguru.logger.info(
+            f"Chaser data state missing keys: {chaser_data_state_missing_keys}"
+        )
+        chaser_data_covariance_missing_keys = self._validate_or_filter_obligatory_items(
+            "",
+            self.chaser_data_covariance,
+            self.keys_data_covariance_obligatory,
+            return_missing_keys=True,
+        )
+        loguru.logger.info(
+            f"Chaser data covariance missing keys: {chaser_data_covariance_missing_keys}"
+        )
 
-    def _filter_obligatory_items(
-        self, return_string, items_dict, keys_obligatory, show_all=False
+    def _validate_or_filter_obligatory_items(
+        self,
+        return_string,
+        items_dict,
+        keys_obligatory,
+        show_all=False,
+        return_missing_keys=False,
     ):
         """
         Filter the keys to only include the obligatory ones.
         """
+        missing_keys = []
         for k, v in items_dict.items():
             if v is None:
                 if show_all or k in keys_obligatory:
                     return_string += f" {k}: None\n"
+                    missing_keys.append(k)
             else:
                 return_string += f" {k}: {v}\n"
-        return return_string
 
-    def key_value_notation(self):
+        if return_missing_keys:
+            return_value = missing_keys
+        else:
+            return_value = return_string
+        return return_value
+
+    def _key_value_notation(self, show_all=False):
         ret = ""
         ret += "Header:\n"
-        ret = self._filter_obligatory_items(
+        ret = self._validate_or_filter_obligatory_items(
             ret,
             self.header,
             self.keys_header_obligatory,
-            show_all=False,
+            show_all=show_all,
         )
         ret += "Metadata:\n"
-        ret = self._filter_obligatory_items(
+        ret = self._validate_or_filter_obligatory_items(
             ret,
             self.relative_metadata,
             self.keys_relative_metadata_obligatory,
-            show_all=False,
+            show_all=show_all,
         )
         ret += "Target_metadata:\n"
-        ret = self._filter_obligatory_items(
+        ret = self._validate_or_filter_obligatory_items(
             ret,
             self.target_metadata,
             self.keys_metadata_obligatory,
-            show_all=False,
+            show_all=show_all,
         )
         ret += "Target_data_od:\n"
-        ret = self._filter_obligatory_items(
+        ret = self._validate_or_filter_obligatory_items(
             ret,
             self.target_data_od,
             self.keys_data_od_obligatory,
-            show_all=False,
+            show_all=show_all,
         )
         ret += "Target_data_state:\n"
-        ret = self._filter_obligatory_items(
+        ret = self._validate_or_filter_obligatory_items(
             ret,
             self.target_data_state,
             self.keys_data_state_obligatory,
-            show_all=False,
+            show_all=show_all,
         )
         ret += "Target_data_covariance:\n"
-        ret = self._filter_obligatory_items(
+        ret = self._validate_or_filter_obligatory_items(
             ret,
             self.target_data_covariance,
             self.keys_data_covariance_obligatory,
-            show_all=False,
+            show_all=show_all,
         )
         ret += "Chaser_metadata:\n"
-        ret = self._filter_obligatory_items(
+        ret = self._validate_or_filter_obligatory_items(
             ret,
             self.chaser_metadata,
             self.keys_metadata_obligatory,
-            show_all=False,
+            show_all=show_all,
         )
         ret += "Chaser_data_od:\n"
-        ret = self._filter_obligatory_items(
+        ret = self._validate_or_filter_obligatory_items(
             ret,
             self.chaser_data_od,
             self.keys_data_od_obligatory,
-            show_all=False,
+            show_all=show_all,
         )
         ret += "Chaser_data_state:\n"
-        ret = self._filter_obligatory_items(
+        ret = self._validate_or_filter_obligatory_items(
             ret,
             self.chaser_data_state,
             self.keys_data_state_obligatory,
-            show_all=False,
+            show_all=show_all,
         )
         ret += "Chaser_data_covariance:\n"
-        ret = self._filter_obligatory_items(
+        ret = self._validate_or_filter_obligatory_items(
             ret,
             self.chaser_data_covariance,
             self.keys_data_covariance_obligatory,
-            show_all=False,
+            show_all=show_all,
         )
 
         return ret
 
+    def __doy_2_date(value, doy, year, idx):
+        """
+        Written by Andrew Ng, 18/03/2022,
+        Based on source code @ https://github.com/nasa/CARA_Analysis_Tools/blob/master/two-dimension_Pc/Main/TransformationCode/TimeTransformations/DOY2Date.m
+        Use the datetime python package.
+        doy_2_date  - Converts Day of Year (DOY) date format to date format.
+
+        Args:
+            - value(``str``): Original date time string with day of year format "YYYY-DDDTHH:MM:SS.ff"
+            - doy  (``str``): The day of year in the DOY format.
+            - year (``str``): The year.
+            - idx  (``int``): Index of the start of the original "value" string at which characters 'DDD' are found.
+        Returns:
+            -value (``str``): Transformed date in traditional date format. i.e.: "YYYY-mm-ddTHH:MM:SS.ff"
+
+        """
+        # Calculate datetime format
+        date_num = datetime.datetime(int(year), 1, 1) + timedelta(int(doy) - 1)
+
+        # Split datetime object into a date list
+        date_vec = [
+            date_num.year,
+            date_num.month,
+            date_num.day,
+            date_num.hour,
+            date_num.minute,
+        ]
+        # Extract final date string. Use zfill() to pad year, month and day fields with zeroes if not filling up sufficient spaces.
+        value = (
+            str(date_vec[0]).zfill(4)
+            + "-"
+            + str(date_vec[1]).zfill(2)
+            + "-"
+            + str(date_vec[2]).zfill(2)
+            + "T"
+            + value[idx + 4 : -1]
+        )
+        return value
+
+    def __get_ccsds_time_format(self, time_string):
+        """
+        Determines the format of a CCSDS time string.
+
+        The CCSDS time format is required to be of the general form:
+        yyyy-[mm-dd|ddd]THH:MM:SS[.F*][Z]
+
+        Args:
+            time_string (str): Original time string stored in CDM.
+
+        Returns:
+            str: The format of the time string.
+
+        Raises:
+            RuntimeError: If the time string is invalid.
+        """
+        if time_string.count("T") != 1:
+            raise RuntimeError(
+                f"Invalid CCSDS time string: {time_string}. "
+                "The string must contain exactly one 'T' separator."
+            )
+
+        date_time_split = time_string.split("T")
+        date_part, time_part = date_time_split[0], date_time_split[1]
+
+        if len(date_part) == 10:
+            time_format = "yyyy-mm-ddTHH:MM:SS"
+        elif len(date_part) == 8:
+            time_format = "yyyy-DDDTHH:MM:SS"
+        else:
+            raise RuntimeError(
+                f"Invalid CCSDS time string: {time_string}. "
+                "Date format must be either yyyy-mm-dd or yyyy-DDD."
+            )
+
+        z_opt = time_part.endswith("Z")
+        if z_opt:
+            time_part = time_part[:-1]
+
+        if "." in time_part:
+            if time_part.count(".") > 1:
+                raise RuntimeError(
+                    f"Invalid CCSDS time string: {time_string}. "
+                    "The string must contain at most one '.' for fractional seconds."
+                )
+            frac_length = len(time_part.split(".")[1])
+            time_format += f".{'F' * frac_length}"
+
+        if z_opt:
+            time_format += "Z"
+
+        return time_format
+
+    def __hash__(self):
+        return hash(self.key_value_notation(), show_all=True)
+
+    def __eq__(self, other):
+        if isinstance(other, ConjuctionDataMessage):
+            return self.key_value_notation(show_all=True) == hash(other)
+        return False
+
     def __repr__(self):
-        return self.key_value_notation()
+        return self._key_value_notation()
 
     def __getitem__(self, key):
         return self.to_dict().get(key, None)
@@ -342,26 +706,7 @@ class ConjuctionDataMessage(BaseModel, strict=False, frozen=False, extra="forbid
             key = value.get("key", None)
             value = value.get("value", None)
 
-            if object == "target":
-                if key in self.target_metadata.keys():
-                    self.target_metadata[key] = value
-                elif key in self.target_data_od.keys():
-                    self.target_data_od[key] = value
-                elif key in self.target_data_state.keys():
-                    self.target_data_state[key] = value
-                elif key in self.target_data_covariance.keys():
-                    self.target_data_covariance[key] = value
-            elif object == "chaser":
-                if key in self.chaser_metadata.keys():
-                    self.chaser_metadata[key] = value
-                elif key in self.chaser_data_od.keys():
-                    self.chaser_data_od[key] = value
-                elif key in self.chaser_data_state.keys():
-                    self.chaser_data_state[key] = value
-                elif key in self.chaser_data_covariance.keys():
-                    self.chaser_data_covariance[key] = value
-            else:
-                raise KeyError(f"Key {key} not found in target or chaser.")
+            self.set_object(object, key, value)
 
         else:
             if key in self.header.keys():

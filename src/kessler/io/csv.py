@@ -97,21 +97,25 @@ class CSVReader(Reader):
     ORIGINATOR: T.Optional[str] = "ESA"
     MESSAGE_FOR: T.Optional[str] = "ESA"
     MESSAGE_ID: T.Optional[int] = 1
-    OBJECT_1: T.Optional[str] = "Target"
-    OBJECT_2: T.Optional[str] = "Chaser"
+    OBJECT_1: T.Optional[str] = "target"
+    OBJECT_2: T.Optional[str] = "chaser"
     url: str = "https://kelvins.esa.int/media/public/competitions/collision-avoidance-challenge/train_data.zip"
 
     def read(self, columns_to_keep) -> pd.DataFrame:
         if os.path.exists(self.path):
             data = pd.read_csv(self.path)
         else:
-            loguru.logger.info(f"File not found at {self.path}. Downloading from {self.url}.")
+            loguru.logger.info(
+                f"File not found at {self.path}. Downloading from {self.url}."
+            )
             data = self._download_data()
 
         if self.limit is not None:
             data = data.head(self.limit)
 
-        columns_to_keep = [col for col in columns_to_keep if col not in non_column_names]
+        columns_to_keep = [
+            col for col in columns_to_keep if col not in non_column_names
+        ]
         missing_columns = [col for col in columns_to_keep if col not in data.columns]
         if missing_columns:
             loguru.logger.warning(
@@ -138,7 +142,9 @@ class CSVReader(Reader):
 
         loguru.logger.warning(f"Using all events: {number_of_events}")
 
-        data = self.create_event_dataset(data_grouped_by_event_id, number_of_events, date_tca)
+        data = self.create_event_dataset(
+            data_grouped_by_event_id, number_of_events, date_tca
+        )
 
         return data
 
@@ -150,7 +156,9 @@ class CSVReader(Reader):
         predictions: str | None = None,
     ) -> Lineage:
         # TODO: Confirm the lineage function output
-        return lineage.from_pandas(data, name=name, targets=targets, predictions=predictions)
+        return lineage.from_pandas(
+            data, name=name, targets=targets, predictions=predictions
+        )
 
     def _download_data(self) -> pd.DataFrame:
         """Download the dataset from the url.
@@ -188,7 +196,9 @@ class CSVReader(Reader):
             data = data[condition]
         return data
 
-    def create_event_dataset(self, data_grouped_by_event_id, number_of_events, date_tca):
+    def create_event_dataset(
+        self, data_grouped_by_event_id, number_of_events, date_tca
+    ):
         events = []
         for i, (event_id, event_data) in enumerate(data_grouped_by_event_id):
             loguru.logger.warning(f"Processing event {i + 1} with event_id {event_id}")
@@ -204,7 +214,9 @@ class CSVReader(Reader):
         single_row_cdm = []
 
         for _, single_cdm_data in event_data.iterrows():
-            single_row_cdm.append(self.single_event_to_cdm(single_cdm_data, date_tca, event_id))
+            single_row_cdm.append(
+                self.single_event_to_cdm(single_cdm_data, date_tca, event_id)
+            )
 
         return single_row_cdm
 
@@ -270,7 +282,9 @@ class CSVReader(Reader):
         )
 
     def get_data_od(self, column_prefix, single_cdm_data, creation_date):
-        time_lastob_start = single_cdm_data.get(f"{column_prefix}_time_lastob_start", None)
+        time_lastob_start = single_cdm_data.get(
+            f"{column_prefix}_time_lastob_start", None
+        )
         time_lastob_start = creation_date - timedelta(days=time_lastob_start)
         time_lastob_end = single_cdm_data.get(f"{column_prefix}_time_lastob_end", None)
         time_lastob_end = creation_date - timedelta(days=time_lastob_end)
@@ -278,19 +292,31 @@ class CSVReader(Reader):
             "RECOMMENDED_OD_SPAN": single_cdm_data.get(
                 f"{column_prefix}_recommended_od_span", None
             ),
-            "ACTUAL_OD_SPAN": single_cdm_data.get(f"{column_prefix}_actual_od_span", None),
-            "OBS_AVAILABLE": single_cdm_data.get(f"{column_prefix}_obs_available", None),
+            "ACTUAL_OD_SPAN": single_cdm_data.get(
+                f"{column_prefix}_actual_od_span", None
+            ),
+            "OBS_AVAILABLE": single_cdm_data.get(
+                f"{column_prefix}_obs_available", None
+            ),
             "OBS_USED": single_cdm_data.get(f"{column_prefix}_obs_used", None),
-            "TRACKS_AVAILABLE": single_cdm_data.get(f"{column_prefix}_tracks_available", None),
+            "TRACKS_AVAILABLE": single_cdm_data.get(
+                f"{column_prefix}_tracks_available", None
+            ),
             "TRACKS_USED": single_cdm_data.get(f"{column_prefix}_tracks_used", None),
-            "RESIDUALS_ACCEPTED": single_cdm_data.get(f"{column_prefix}_residuals_accepted", None),
+            "RESIDUALS_ACCEPTED": single_cdm_data.get(
+                f"{column_prefix}_residuals_accepted", None
+            ),
             "WEIGHTED_RMS": single_cdm_data.get(f"{column_prefix}_weighted_rms", None),
             "AREA_PC": single_cdm_data.get(f"{column_prefix}_area_pc", None),
             "AREA_DRG": single_cdm_data.get(f"{column_prefix}_area_drg", None),
             "AREA_SRP": single_cdm_data.get(f"{column_prefix}_area_srp", None),
             "MASS": single_cdm_data.get(f"{column_prefix}_mass", None),
-            "CD_AREA_OVER_MASS": single_cdm_data.get(f"{column_prefix}_cd_area_over_mass", None),
-            "CR_AREA_OVER_MASS": single_cdm_data.get(f"{column_prefix}_cr_area_over_mass", None),
+            "CD_AREA_OVER_MASS": single_cdm_data.get(
+                f"{column_prefix}_cd_area_over_mass", None
+            ),
+            "CR_AREA_OVER_MASS": single_cdm_data.get(
+                f"{column_prefix}_cr_area_over_mass", None
+            ),
             "THRUST_ACCELERATION": single_cdm_data.get(
                 f"{column_prefix}_thrust_acceleration", None
             ),
@@ -424,9 +450,13 @@ class CSVReader(Reader):
             "OBJECT_DESIGNATOR": single_cdm_data.get("object_designator", None),
             "CATALOG_NAME": single_cdm_data.get("catalog_name", None),
             "OBJECT_NAME": single_cdm_data.get("object_name", None),
-            "INTERNATIONAL_DESIGNATOR": single_cdm_data.get("international_designator", None),
+            "INTERNATIONAL_DESIGNATOR": single_cdm_data.get(
+                "international_designator", None
+            ),
             "OBJECT_TYPE": single_cdm_data.get("object_type", None),
-            "OPERATOR_CONTACT_POSITION": single_cdm_data.get("operator_contact_position", None),
+            "OPERATOR_CONTACT_POSITION": single_cdm_data.get(
+                "operator_contact_position", None
+            ),
             "OPERATOR_ORGANIZATION": single_cdm_data.get("operator_organization", None),
             "OPERATOR_PHONE": single_cdm_data.get("operator_phone", None),
             "OPERATOR_EMAIL": single_cdm_data.get("operator_email", None),
