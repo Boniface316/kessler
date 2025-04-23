@@ -44,6 +44,3 @@ class EventDataset(BaseModel):
             return "EventDataset(Events:{}, number of CDMs per event: {} (min), {} (max), {:.2f} (mean))".format(
                 len(self.events), event_lengths_min, event_lengths_max, event_lengths_mean
             )
-
-
-CNDOT_NDOT: 0.14935299999999999

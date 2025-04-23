@@ -10,6 +10,7 @@ import loguru
 class ConjuctionDataMessage(BaseModel, strict=False, frozen=False, extra="forbid"):
     header: dict
     relative_metadata: dict
+    values_extra: dict
 
     target_metadata: dict
     target_data_od: dict
@@ -169,6 +170,7 @@ class ConjuctionDataMessage(BaseModel, strict=False, frozen=False, extra="forbid
         return ConjuctionDataMessage(
             header=header,
             relative_metadata=relative_metadata,
+            values_extra={},
             target_metadata=target_metadata,
             target_data_od=target_data_od,
             target_data_state=target_data_state,
