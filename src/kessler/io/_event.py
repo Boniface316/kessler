@@ -96,11 +96,21 @@ class EventDataset(BaseModel):
         return events
 
     @staticmethod
-    def from_pandas(self):
-        pass
+    def from_pandas(self, df, groups_events_by="event_id"):
+        loguru.logger(f"Dataframe with {len(df)} rows and {len(df.columns)} columns")
+        df = df.dropna(axis=1)
+        column_names_after_dropping = list(df.columns)
+        df_events = df.groupby(groups_events_by)
+        events = []
+        for event_id, event_data in df_events:
+            for _, single_cdm in event_data.iterrows():
+                breakpoint()
 
     def to_dataframe(self):
-        pass
+        event_dataframes = []
+        for event in self.events:
+            event_dataframes.extend(event.to_dataframe())
+        return pd.concat(event_dataframes, ignore_index=True)
 
     def dates(self):
         pass
