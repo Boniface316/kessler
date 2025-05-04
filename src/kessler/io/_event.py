@@ -6,6 +6,10 @@ import os
 import loguru
 import re
 from glob import glob
+from .__keys import header, relative_metadata, metadata, data_state, data_covariance
+from ._utils import _from_date_str_to_days, _add_days_to_date_str
+from datetime import datetime
+import numpy as np
 
 
 class Event(BaseModel, arbitrary_types_allowed=True):
@@ -57,7 +61,7 @@ class Event(BaseModel, arbitrary_types_allowed=True):
             return self._cdms[index]
 
     def __len__(self):
-        return len(self._cdms)
+        return len(self.cdms)
 
 
 class EventDataset(BaseModel):
@@ -96,15 +100,117 @@ class EventDataset(BaseModel):
         return events
 
     @staticmethod
-    def from_pandas(self, df, groups_events_by="event_id"):
-        loguru.logger(f"Dataframe with {len(df)} rows and {len(df.columns)} columns")
+    def from_pandas(
+        df,
+        groups_events_by="EVENT_ID",
+        header=header,
+        relative_metadata=relative_metadata,
+        object_metadata=metadata,
+        data_state=data_state,
+        data_covariance=data_covariance,
+        from_date_str_to_days=_from_date_str_to_days,
+    ):
+        loguru.logger.info(
+            f"Dataframe with {len(df)} rows and {len(df.columns)} columns"
+        )
         df = df.dropna(axis=1)
         column_names_after_dropping = list(df.columns)
         df_events = df.groupby(groups_events_by)
         events = []
+        cdms = []
+        # TODO: Verify the date format and compare it to original
         for event_id, event_data in df_events:
+            first_date_of_event_str = event_data["CREATION_DATE"].iloc[0]
+            first_date_of_event = datetime.strptime(
+                first_date_of_event_str, "%Y-%m-%dT%H:%M:%S.%f"
+            )
             for _, single_cdm in event_data.iterrows():
-                breakpoint()
+                TCA = single_cdm["TCA"]
+                creation_date_str = single_cdm["CREATION_DATE"]
+
+                __creation_date = _from_date_str_to_days(
+                    creation_date_str, first_date_of_event
+                )
+                __TCA = _from_date_str_to_days(TCA, first_date_of_event)
+                __DAYS_TO_TCA = __TCA - __creation_date
+
+                header_dict = {
+                    header: single_cdm[header]
+                    for header in header
+                    if header in column_names_after_dropping
+                }
+                relative_metadata_dict = {
+                    relative_metadata: single_cdm[relative_metadata]
+                    for relative_metadata in relative_metadata
+                    if relative_metadata in column_names_after_dropping
+                }
+                target_metadata_dict = {
+                    f"t_{target_metadata}": single_cdm["t_" + target_metadata]
+                    for target_metadata in object_metadata
+                    if "t_" + target_metadata in column_names_after_dropping
+                }
+                target_data_od_dict = {
+                    f"t_{target_data_od}": single_cdm["t_" + target_data_od]
+                    for target_data_od in object_metadata
+                    if "t_" + target_data_od in column_names_after_dropping
+                }
+                target_data_state_dict = {
+                    f"t_{target_data_state}": single_cdm["t_" + target_data_state]
+                    for target_data_state in data_state
+                    if "t_" + target_data_state in column_names_after_dropping
+                }
+                target_data_covariance_dict = {
+                    f"t_{target_data_covariance}": single_cdm[
+                        "t_" + target_data_covariance
+                    ]
+                    for target_data_covariance in data_covariance
+                    if "t_" + target_data_covariance in column_names_after_dropping
+                }
+                chaser_metadata_dict = {
+                    f"c_{chaser_metadata}": single_cdm["c_" + chaser_metadata]
+                    for chaser_metadata in object_metadata
+                    if "c_" + chaser_metadata in column_names_after_dropping
+                }
+                chaser_data_od_dict = {
+                    f"c_{chaser_data_od}": single_cdm["c_" + chaser_data_od]
+                    for chaser_data_od in object_metadata
+                    if "c_" + chaser_data_od in column_names_after_dropping
+                }
+                chaser_data_state_dict = {
+                    f"c_{chaser_data_state}": single_cdm["c_" + chaser_data_state]
+                    for chaser_data_state in data_state
+                    if "c_" + chaser_data_state in column_names_after_dropping
+                }
+                chaser_data_covariance_dict = {
+                    f"c_{chaser_data_covariance}": single_cdm[
+                        "c_" + chaser_data_covariance
+                    ]
+                    for chaser_data_covariance in data_covariance
+                    if "c_" + chaser_data_covariance in column_names_after_dropping
+                }
+
+                values_extra = {
+                    "__CREATION_DATE": __creation_date,
+                    "__TCA": __TCA,
+                    "__DAYS_TO_TCA": __DAYS_TO_TCA,
+                }
+
+                single_cdm = CDM(
+                    header=header_dict,
+                    relative_metadata=relative_metadata_dict,
+                    values_extra=values_extra,
+                    target_metadata=target_metadata_dict,
+                    target_data_od=target_data_od_dict,
+                    target_data_state=target_data_state_dict,
+                    target_data_covariance=target_data_covariance_dict,
+                    chaser_metadata=chaser_metadata_dict,
+                    chaser_data_od=chaser_data_od_dict,
+                    chaser_data_state=chaser_data_state_dict,
+                    chaser_data_covariance=chaser_data_covariance_dict,
+                )
+                cdms.append(single_cdm)
+            events.append(Event(cdms=cdms))
+        return EventDataset(events=events)
 
     def to_dataframe(self):
         event_dataframes = []
@@ -112,37 +218,87 @@ class EventDataset(BaseModel):
             event_dataframes.extend(event.to_dataframe())
         return pd.concat(event_dataframes, ignore_index=True)
 
-    def dates(self):
-        pass
+    # TODO: verify the output with the original
+    def dates(self, _add_days_to_date_str=_add_days_to_date_str):
+        print(
+            "CDM| CREATION_DATE (mean)       | Days (mean, std)  | Days to TCA (mean, std)"
+        )
+        for i in range(self.event_lengths_max):
+            creation_date_days = []
+            days_to_tca = []
+            for event in self.events:
+                for cdm in event.cdms:
+                    creation_date_days.append(cdm.values_extra.get("__CREATION_DATE"))
+                    days_to_tca.append(cdm.values_extra.get("__DAYS_TO_TCA"))
+
+            creation_date_days = np.array(creation_date_days)
+            creation_date_days_mean, creation_date_days_stddev = (
+                creation_date_days.mean(),
+                creation_date_days.std(),
+            )
+
+            days_to_tca = np.array(days_to_tca)
+            days_to_tca_mean, days_to_tca_stddev = days_to_tca.mean(), days_to_tca.std()
+
+            first_creation_date = self.events[0].cdms[0].header["CREATION_DATE"]
+            creation_date_days_mean_str = _add_days_to_date_str(
+                first_creation_date, creation_date_days_mean
+            )
+            print(
+                "{:02d} | {} | {:.6f} {:.6f} | {:.6f} {:.6f}".format(
+                    i + 1,
+                    creation_date_days_mean_str,
+                    creation_date_days_mean,
+                    creation_date_days_stddev,
+                    days_to_tca_mean,
+                    days_to_tca_stddev,
+                )
+            )
 
     @property
     def event_lengths(self):
-        pass
+        return list(map(len, self.events))
 
     @property
-    def event_lenths_min(self):
-        pass
+    def event_lengths_min(self):
+        return min(self.event_lengths)
 
     @property
     def event_lengths_max(self):
-        pass
+        return min(self.event_lengths)
 
     @property
     def event_lengths_mean(self):
-        pass
+        return np.array(self.event_lengths).mean()
 
     @property
     def event_lengths_stddev(self):
-        pass
+        return np.array(self.event_lengths).std()
 
     def common_features(self, only_numeric=False):
-        pass
+        df = self.to_dataframe()
+        df = df.dropna(axis=1)
+        if only_numeric:
+            df = df.select_dtypes(include=["int", "float64", "float32"])
+        features = list(df.columns)
+        if "__DAYS_TO_TCA" in features:
+            features.remove("__DAYS_TO_TCA")
+        return features
 
     def get_CDMs(self):
-        pass
+        cdms = []
+        for event in self.events:
+            for cdm in event.cdms:
+                cdms.append(cdm)
+        return cdms
 
+    # TODO: figure out how this is being used
     def filter(self, filter_function):
-        pass
+        events = []
+        for event in self:
+            if filter_function(event):
+                events.append(event)
+        return EventDataset(events=events)
 
     def __getitem__(self, index):
         if isinstance(index, slice):
@@ -151,7 +307,7 @@ class EventDataset(BaseModel):
             return self.events[index]
 
     def __len__(self):
-        pass
+        return len(self.events)
 
     def __repr__(self):
         if len(self.events) == 0:
@@ -161,9 +317,5 @@ class EventDataset(BaseModel):
             event_lengths_min = min(event_lengths)
             event_lengths_max = max(event_lengths)
             event_lengths_mean = sum(event_lengths) / len(event_lengths)
-            return "EventDataset(Events:{}, number of CDMs per event: {} (min), {} (max), {:.2f} (mean))".format(
-                len(self.events),
-                event_lengths_max,
-                event_lengths_min,
-                event_lengths_mean,
-            )
+
+            return f"EventDataset(Events: {len(self.events)}, number of CDMs per event: {event_lengths_max} (max), {event_lengths_min} (min), {event_lengths_mean:.2f} (mean))"
