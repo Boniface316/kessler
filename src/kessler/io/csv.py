@@ -6,12 +6,12 @@ import os
 import requests
 import zipfile
 import io
-import functools
 import loguru
 import mlflow.data.pandas_dataset as lineage
 from datetime import datetime, timedelta
 from ._CDM import CDM
 from ._event import Event, EventDataset
+from ._utils import _from_date_str_to_days
 
 non_column_names = [
     "index",
@@ -106,13 +106,17 @@ class CSVReader(Reader):
         if os.path.exists(self.path):
             data = pd.read_csv(self.path)
         else:
-            loguru.logger.info(f"File not found at {self.path}. Downloading from {self.url}.")
+            loguru.logger.info(
+                f"File not found at {self.path}. Downloading from {self.url}."
+            )
             data = self._download_data()
 
         if self.limit is not None:
             data = data.head(self.limit)
 
-        columns_to_keep = [col for col in columns_to_keep if col not in non_column_names]
+        columns_to_keep = [
+            col for col in columns_to_keep if col not in non_column_names
+        ]
         missing_columns = [col for col in columns_to_keep if col not in data.columns]
         if missing_columns:
             loguru.logger.warning(
@@ -139,7 +143,9 @@ class CSVReader(Reader):
 
         loguru.logger.warning(f"Using all events: {number_of_events}")
 
-        data = self.create_event_dataset(data_grouped_by_event_id, number_of_events, date_tca)
+        data = self.create_event_dataset(
+            data_grouped_by_event_id, number_of_events, date_tca
+        )
 
         return data
 
@@ -151,7 +157,9 @@ class CSVReader(Reader):
         predictions: str | None = None,
     ) -> Lineage:
         # TODO: Confirm the lineage function output
-        return lineage.from_pandas(data, name=name, targets=targets, predictions=predictions)
+        return lineage.from_pandas(
+            data, name=name, targets=targets, predictions=predictions
+        )
 
     def _download_data(self) -> pd.DataFrame:
         """Download the dataset from the url.
@@ -189,14 +197,17 @@ class CSVReader(Reader):
             data = data[condition]
         return data
 
-    def create_event_dataset(self, data_grouped_by_event_id, number_of_events, date_tca):
+    def create_event_dataset(
+        self, data_grouped_by_event_id, number_of_events, date_tca
+    ):
         events = []
         for i, (event_id, event_data) in enumerate(data_grouped_by_event_id):
             loguru.logger.warning(f"Processing event {i + 1} with event_id {event_id}")
             if i > number_of_events:
                 break
-
-            first_date_of_event = self._get_creation_date(event_data.time_to_tca.iloc[0], date_tca)
+            first_date_of_event = self._get_creation_date(
+                event_data.time_to_tca.iloc[0], date_tca
+            )
             # first_date_of_event = first_date_of_event.strftime("%Y-%m-%dT%H:%M:%S.%f")
             cdms_per_event_id = self.event_data_to_cdms(
                 event_data, date_tca, event_id, first_date_of_event
@@ -210,21 +221,30 @@ class CSVReader(Reader):
 
         for _, single_cdm_data in event_data.iterrows():
             single_row_cdm.append(
-                self.single_event_to_cdm(single_cdm_data, date_tca, event_id, first_date_of_event)
+                self.single_event_to_cdm(
+                    single_cdm_data, date_tca, event_id, first_date_of_event
+                )
             )
 
         return single_row_cdm
 
     def single_event_to_cdm(
-        self, single_cdm_data: pd.DataFrame, date_tca, event_id, first_date_of_event
+        self,
+        single_cdm_data: pd.DataFrame,
+        date_tca,
+        event_id,
+        first_date_of_event,
+        _from_date_str_to_days=_from_date_str_to_days,
     ):
-        creation_date = self._get_creation_date(single_cdm_data["time_to_tca"], date_tca)
+        creation_date = self._get_creation_date(
+            single_cdm_data["time_to_tca"], date_tca
+        )
 
         creation_date_str = creation_date.strftime("%Y-%m-%dT%H:%M:%S.%f")
         TCA = date_tca.strftime("%Y-%m-%dT%H:%M:%S.%f")
 
-        __creation_date = self._from_date_str_to_days(creation_date_str, first_date_of_event)
-        __TCA = self._from_date_str_to_days(TCA, first_date_of_event)
+        __creation_date = _from_date_str_to_days(creation_date_str, first_date_of_event)
+        __TCA = _from_date_str_to_days(TCA, first_date_of_event)
         __DAYS_TO_TCA = __TCA - __creation_date
 
         values_extra = {
@@ -292,7 +312,9 @@ class CSVReader(Reader):
         )
 
     def get_data_od(self, column_prefix, single_cdm_data, creation_date):
-        time_lastob_start = single_cdm_data.get(f"{column_prefix}_time_lastob_start", None)
+        time_lastob_start = single_cdm_data.get(
+            f"{column_prefix}_time_lastob_start", None
+        )
         time_lastob_start = creation_date - timedelta(days=time_lastob_start)
         time_lastob_end = single_cdm_data.get(f"{column_prefix}_time_lastob_end", None)
         time_lastob_end = creation_date - timedelta(days=time_lastob_end)
@@ -300,19 +322,31 @@ class CSVReader(Reader):
             "RECOMMENDED_OD_SPAN": single_cdm_data.get(
                 f"{column_prefix}_recommended_od_span", None
             ),
-            "ACTUAL_OD_SPAN": single_cdm_data.get(f"{column_prefix}_actual_od_span", None),
-            "OBS_AVAILABLE": single_cdm_data.get(f"{column_prefix}_obs_available", None),
+            "ACTUAL_OD_SPAN": single_cdm_data.get(
+                f"{column_prefix}_actual_od_span", None
+            ),
+            "OBS_AVAILABLE": single_cdm_data.get(
+                f"{column_prefix}_obs_available", None
+            ),
             "OBS_USED": single_cdm_data.get(f"{column_prefix}_obs_used", None),
-            "TRACKS_AVAILABLE": single_cdm_data.get(f"{column_prefix}_tracks_available", None),
+            "TRACKS_AVAILABLE": single_cdm_data.get(
+                f"{column_prefix}_tracks_available", None
+            ),
             "TRACKS_USED": single_cdm_data.get(f"{column_prefix}_tracks_used", None),
-            "RESIDUALS_ACCEPTED": single_cdm_data.get(f"{column_prefix}_residuals_accepted", None),
+            "RESIDUALS_ACCEPTED": single_cdm_data.get(
+                f"{column_prefix}_residuals_accepted", None
+            ),
             "WEIGHTED_RMS": single_cdm_data.get(f"{column_prefix}_weighted_rms", None),
             "AREA_PC": single_cdm_data.get(f"{column_prefix}_area_pc", None),
             "AREA_DRG": single_cdm_data.get(f"{column_prefix}_area_drg", None),
             "AREA_SRP": single_cdm_data.get(f"{column_prefix}_area_srp", None),
             "MASS": single_cdm_data.get(f"{column_prefix}_mass", None),
-            "CD_AREA_OVER_MASS": single_cdm_data.get(f"{column_prefix}_cd_area_over_mass", None),
-            "CR_AREA_OVER_MASS": single_cdm_data.get(f"{column_prefix}_cr_area_over_mass", None),
+            "CD_AREA_OVER_MASS": single_cdm_data.get(
+                f"{column_prefix}_cd_area_over_mass", None
+            ),
+            "CR_AREA_OVER_MASS": single_cdm_data.get(
+                f"{column_prefix}_cr_area_over_mass", None
+            ),
             "THRUST_ACCELERATION": single_cdm_data.get(
                 f"{column_prefix}_thrust_acceleration", None
             ),
@@ -446,9 +480,13 @@ class CSVReader(Reader):
             "OBJECT_DESIGNATOR": single_cdm_data.get("object_designator", None),
             "CATALOG_NAME": single_cdm_data.get("catalog_name", None),
             "OBJECT_NAME": single_cdm_data.get("object_name", None),
-            "INTERNATIONAL_DESIGNATOR": single_cdm_data.get("international_designator", None),
+            "INTERNATIONAL_DESIGNATOR": single_cdm_data.get(
+                "international_designator", None
+            ),
             "OBJECT_TYPE": single_cdm_data.get("object_type", None),
-            "OPERATOR_CONTACT_POSITION": single_cdm_data.get("operator_contact_position", None),
+            "OPERATOR_CONTACT_POSITION": single_cdm_data.get(
+                "operator_contact_position", None
+            ),
             "OPERATOR_ORGANIZATION": single_cdm_data.get("operator_organization", None),
             "OPERATOR_PHONE": single_cdm_data.get("operator_phone", None),
             "OPERATOR_EMAIL": single_cdm_data.get("operator_email", None),
@@ -468,15 +506,19 @@ class CSVReader(Reader):
     def _get_creation_date(self, time_to_tca, date_tca):
         return date_tca - timedelta(days=time_to_tca)
 
-    @functools.lru_cache(maxsize=None)
-    def _from_date_str_to_days(
-        self, cdm_date, date0="2020-05-22T21:41:31.975", date_format="%Y-%m-%dT%H:%M:%S.%f"
-    ):
-        cdm_date = datetime.strptime(cdm_date, date_format)
-        dd = cdm_date - date0
-        days = dd.days
-        days_fraction = (dd.seconds + dd.microseconds / 1e6) / (60 * 60 * 24)
-        return days + days_fraction
+    # # TODO: shared with EventDataSet class in _event.py
+    # @functools.lru_cache(maxsize=None)
+    # def _from_date_str_to_days(
+    #     self,
+    #     cdm_date,
+    #     date0="2020-05-22T21:41:31.975",
+    #     date_format="%Y-%m-%dT%H:%M:%S.%f",
+    # ):
+    #     cdm_date = datetime.strptime(cdm_date, date_format)
+    #     dd = cdm_date - date0
+    #     days = dd.days
+    #     days_fraction = (dd.seconds + dd.microseconds / 1e6) / (60 * 60 * 24)
+    #     return days + days_fraction
 
 
 class CSVWriter(Writer):
