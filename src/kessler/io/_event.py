@@ -56,9 +56,9 @@ class Event(BaseModel, arbitrary_types_allowed=True):
 
     def __getitem__(self, index):
         if isinstance(index, slice):
-            return Event(cdms=self._cdms[index])
+            return Event(cdms=self.cdms[index])
         else:
-            return self._cdms[index]
+            return self.cdms[index]
 
     def __len__(self):
         return len(self.cdms)
@@ -94,9 +94,7 @@ class EventDataset(BaseModel):
         elif isinstance(events, list):
             pass
         else:
-            raise ValueError(
-                "events must be a list of Event objects or a string of the folder."
-            )
+            raise ValueError("events must be a list of Event objects or a string of the folder.")
         return events
 
     @staticmethod
@@ -110,9 +108,7 @@ class EventDataset(BaseModel):
         data_covariance=data_covariance,
         from_date_str_to_days=_from_date_str_to_days,
     ):
-        loguru.logger.info(
-            f"Dataframe with {len(df)} rows and {len(df.columns)} columns"
-        )
+        loguru.logger.info(f"Dataframe with {len(df)} rows and {len(df.columns)} columns")
         df = df.dropna(axis=1)
         column_names_after_dropping = list(df.columns)
         df_events = df.groupby(groups_events_by)
@@ -121,16 +117,12 @@ class EventDataset(BaseModel):
         # TODO: Verify the date format and compare it to original
         for event_id, event_data in df_events:
             first_date_of_event_str = event_data["CREATION_DATE"].iloc[0]
-            first_date_of_event = datetime.strptime(
-                first_date_of_event_str, "%Y-%m-%dT%H:%M:%S.%f"
-            )
+            first_date_of_event = datetime.strptime(first_date_of_event_str, "%Y-%m-%dT%H:%M:%S.%f")
             for _, single_cdm in event_data.iterrows():
                 TCA = single_cdm["TCA"]
                 creation_date_str = single_cdm["CREATION_DATE"]
 
-                __creation_date = _from_date_str_to_days(
-                    creation_date_str, first_date_of_event
-                )
+                __creation_date = _from_date_str_to_days(creation_date_str, first_date_of_event)
                 __TCA = _from_date_str_to_days(TCA, first_date_of_event)
                 __DAYS_TO_TCA = __TCA - __creation_date
 
@@ -160,9 +152,7 @@ class EventDataset(BaseModel):
                     if "t_" + target_data_state in column_names_after_dropping
                 }
                 target_data_covariance_dict = {
-                    f"t_{target_data_covariance}": single_cdm[
-                        "t_" + target_data_covariance
-                    ]
+                    f"t_{target_data_covariance}": single_cdm["t_" + target_data_covariance]
                     for target_data_covariance in data_covariance
                     if "t_" + target_data_covariance in column_names_after_dropping
                 }
@@ -182,9 +172,7 @@ class EventDataset(BaseModel):
                     if "c_" + chaser_data_state in column_names_after_dropping
                 }
                 chaser_data_covariance_dict = {
-                    f"c_{chaser_data_covariance}": single_cdm[
-                        "c_" + chaser_data_covariance
-                    ]
+                    f"c_{chaser_data_covariance}": single_cdm["c_" + chaser_data_covariance]
                     for chaser_data_covariance in data_covariance
                     if "c_" + chaser_data_covariance in column_names_after_dropping
                 }
@@ -220,9 +208,7 @@ class EventDataset(BaseModel):
 
     # TODO: verify the output with the original
     def dates(self, _add_days_to_date_str=_add_days_to_date_str):
-        print(
-            "CDM| CREATION_DATE (mean)       | Days (mean, std)  | Days to TCA (mean, std)"
-        )
+        print("CDM| CREATION_DATE (mean)       | Days (mean, std)  | Days to TCA (mean, std)")
         for i in range(self.event_lengths_max):
             creation_date_days = []
             days_to_tca = []

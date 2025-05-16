@@ -9,6 +9,8 @@ def _from_date_str_to_days(
     date_format="%Y-%m-%dT%H:%M:%S.%f",
 ):
     cdm_date = datetime.strptime(cdm_date, date_format)
+    if isinstance(date0, str):
+        date0 = datetime.strptime(date0, date_format)
     dd = cdm_date - date0
     days = dd.days
     days_fraction = (dd.seconds + dd.microseconds / 1e6) / (60 * 60 * 24)
