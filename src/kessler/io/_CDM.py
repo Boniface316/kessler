@@ -120,6 +120,7 @@ class ConjuctionDataMessage(BaseModel, strict=False, frozen=False, extra="forbid
             "chaser_data_od",
             "chaser_data_state",
             "chaser_data_covariance",
+            "values_extra",
         ]
 
         for dict_name in dict_names:
@@ -214,9 +215,7 @@ class ConjuctionDataMessage(BaseModel, strict=False, frozen=False, extra="forbid
             try:
                 datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f")
             except ValueError as e:
-                raise RuntimeError(
-                    f"{key} ({value}) is not in the expected format.\n{str(e)}"
-                )
+                raise RuntimeError(f"{key} ({value}) is not in the expected format.\n{str(e)}")
         self.header[key] = value
 
     def set_relative_metadata(self, key, value):
@@ -348,9 +347,7 @@ class ConjuctionDataMessage(BaseModel, strict=False, frozen=False, extra="forbid
             self.target_metadata.get("OBJECT"),
             self.chaser_metadata.get("OBJECT"),
         ]:
-            raise ValueError(
-                f"Invalid object {object}. Make sure it matches with object metadata."
-            )
+            raise ValueError(f"Invalid object {object}. Make sure it matches with object metadata.")
 
     def _get_state_objects(self):
         state_object1 = self.get_state(self.target_metadata.get("OBJECT"))
@@ -372,9 +369,7 @@ class ConjuctionDataMessage(BaseModel, strict=False, frozen=False, extra="forbid
 
     def _update_state_relative(self):
         state_object1, state_object2 = self._get_state_objects()
-        relative_state = self._relative_state_between_objects(
-            state_object1, state_object2
-        )
+        relative_state = self._relative_state_between_objects(state_object1, state_object2)
         self.set_relative_metadata("RELATIVE_POSITION_R", relative_state[0, 0])
         self.set_relative_metadata("RELATIVE_POSITION_T", relative_state[0, 1])
         self.set_relative_metadata("RELATIVE_POSITION_N", relative_state[0, 2])
@@ -432,27 +427,21 @@ class ConjuctionDataMessage(BaseModel, strict=False, frozen=False, extra="forbid
             self.keys_metadata_obligatory,
             return_missing_keys=True,
         )
-        loguru.logger.info(
-            f"Target metadata missing keys: {target_metadata_missing_keys}"
-        )
+        loguru.logger.info(f"Target metadata missing keys: {target_metadata_missing_keys}")
         target_data_od_missing_keys = self._validate_or_filter_obligatory_items(
             "",
             self.target_data_od,
             self.keys_data_od_obligatory,
             return_missing_keys=True,
         )
-        loguru.logger.info(
-            f"Target data od missing keys: {target_data_od_missing_keys}"
-        )
+        loguru.logger.info(f"Target data od missing keys: {target_data_od_missing_keys}")
         target_data_state_missing_keys = self._validate_or_filter_obligatory_items(
             "",
             self.target_data_state,
             self.keys_data_state_obligatory,
             return_missing_keys=True,
         )
-        loguru.logger.info(
-            f"Target data state missing keys: {target_data_state_missing_keys}"
-        )
+        loguru.logger.info(f"Target data state missing keys: {target_data_state_missing_keys}")
         target_data_covariance_missing_keys = self._validate_or_filter_obligatory_items(
             "",
             self.target_data_covariance,
@@ -468,27 +457,21 @@ class ConjuctionDataMessage(BaseModel, strict=False, frozen=False, extra="forbid
             self.keys_metadata_obligatory,
             return_missing_keys=True,
         )
-        loguru.logger.info(
-            f"Chaser metadata missing keys: {chaser_metadata_missing_keys}"
-        )
+        loguru.logger.info(f"Chaser metadata missing keys: {chaser_metadata_missing_keys}")
         chaser_data_od_missing_keys = self._validate_or_filter_obligatory_items(
             "",
             self.chaser_data_od,
             self.keys_data_od_obligatory,
             return_missing_keys=True,
         )
-        loguru.logger.info(
-            f"Chaser data od missing keys: {chaser_data_od_missing_keys}"
-        )
+        loguru.logger.info(f"Chaser data od missing keys: {chaser_data_od_missing_keys}")
         chaser_data_state_missing_keys = self._validate_or_filter_obligatory_items(
             "",
             self.chaser_data_state,
             self.keys_data_state_obligatory,
             return_missing_keys=True,
         )
-        loguru.logger.info(
-            f"Chaser data state missing keys: {chaser_data_state_missing_keys}"
-        )
+        loguru.logger.info(f"Chaser data state missing keys: {chaser_data_state_missing_keys}")
         chaser_data_covariance_missing_keys = self._validate_or_filter_obligatory_items(
             "",
             self.chaser_data_covariance,
