@@ -5,9 +5,24 @@ import numpy as np
 import yaml
 from datetime import datetime, timedelta
 import loguru
+from .__keys import (
+    header_obligatory,
+    relative_metadata_obligatory,
+    metadata_obligatory,
+    data_od_obligatory,
+    data_state_obligatory,
+    data_covariance_obligatory,
+    dict_keys,
+    covariance_indices_dict,
+)
 
 
-class ConjuctionDataMessage(BaseModel, strict=False, frozen=False, extra="forbid"):
+class ConjuctionDataMessage(
+    BaseModel,
+    strict=False,
+    frozen=False,
+    extra="forbid",
+):
     header: dict
     relative_metadata: dict
     values_extra: dict
@@ -22,63 +37,16 @@ class ConjuctionDataMessage(BaseModel, strict=False, frozen=False, extra="forbid
     chaser_data_state: dict
     chaser_data_covariance: dict
 
-    keys_header_obligatory: list = [
-        "CCSDS_CDM_VERS",
-        "CREATION_DATE",
-        "ORIGINATOR",
-        "MESSAGE_ID",
-    ]
-    keys_relative_metadata_obligatory: list = [
-        "TCA",
-        "MISS_DISTANCE",
-    ]
-    keys_metadata_obligatory: list = [
-        "OBJECT",
-        "OBJECT_DESIGNATOR",
-        "CATALOG_NAME",
-        "OBJECT_NAME",
-        "INTERNATIONAL_DESIGNATOR",
-        "EPHEMERIS_NAME",
-        "COVARIANCE_METHOD",
-        "MANEUVERABLE",
-        "REF_FRAME",
-    ]
-    keys_data_od_obligatory: list = [
-        "TIME_LASTOB_START",
-        "TIME_LASTOB_END",
-        "RECOMMENDED_OD_SPAN",
-        "ACTUAL_OD_SPAN",
-        "OBS_AVAILABLE",
-        "OBS_USED",
-        "RESIDUALS_ACCEPTED",
-        "WEIGHTED_RMS",
-        "SEDR",
-    ]
+    keys_header_obligatory: list = header_obligatory
+    keys_relative_metadata_obligatory: list = relative_metadata_obligatory
+    keys_metadata_obligatory: list = metadata_obligatory
+    keys_data_od_obligatory: list = data_od_obligatory
 
-    keys_data_state_obligatory: list = ["X", "Y", "Z", "X_DOT", "Y_DOT", "Z_DOT"]
-    keys_data_covariance_obligatory: list = [
-        "CR_R",
-        "CT_R",
-        "CT_T",
-        "CN_R",
-        "CN_T",
-        "CN_N",
-        "CRDOT_R",
-        "CRDOT_T",
-        "CRDOT_N",
-        "CRDOT_RDOT",
-        "CTDOT_R",
-        "CTDOT_T",
-        "CTDOT_N",
-        "CTDOT_RDOT",
-        "CTDOT_TDOT",
-        "CNDOT_R",
-        "CNDOT_T",
-        "CNDOT_N",
-        "CNDOT_RDOT",
-        "CNDOT_TDOT",
-        "CNDOT_NDOT",
-    ]
+    keys_data_state_obligatory: list = data_state_obligatory
+    keys_data_covariance_obligatory: list = data_covariance_obligatory
+    covariance_indices_dict: dict = covariance_indices_dict
+
+    dict_keys: list = dict_keys
 
     def copy(self):
         return ConjuctionDataMessage(
@@ -106,28 +74,16 @@ class ConjuctionDataMessage(BaseModel, strict=False, frozen=False, extra="forbid
         self.chaser_data_state = deepcopy(other_cdm.chaser_data_state)
         self.chaser_data_covariance = deepcopy(other_cdm.chaser_data_covariance)
 
-    def to_dict(self):
+    def to_dict(
+        self,
+    ):
         data = {}
 
-        dict_names = [
-            "header",
-            "relative_metadata",
-            "target_metadata",
-            "target_data_od",
-            "target_data_state",
-            "target_data_covariance",
-            "chaser_metadata",
-            "chaser_data_od",
-            "chaser_data_state",
-            "chaser_data_covariance",
-            "values_extra",
-        ]
-
-        for dict_name in dict_names:
-            v = getattr(self, dict_name)
-            if dict_name.startswith("target"):
+        for dict_key in self.dict_keys:
+            v = getattr(self, dict_key)
+            if dict_key.startswith("target"):
                 prefix = "t_"
-            elif dict_name.startswith("chaser"):
+            elif dict_key.startswith("chaser"):
                 prefix = "c_"
             else:
                 prefix = ""
@@ -141,14 +97,12 @@ class ConjuctionDataMessage(BaseModel, strict=False, frozen=False, extra="forbid
 
     @staticmethod
     def load(file_name):
-        # Load the YAML file
         try:
             with open(file_name, "r") as file:
                 data = yaml.safe_load(file)
         except Exception as e:
             raise RuntimeError(f"Failed to load file {file_name}: {e}")
 
-        # Convert the loaded data to the appropriate format
         for section, content in data.items():
             if section == "Header":
                 header = content
@@ -170,11 +124,13 @@ class ConjuctionDataMessage(BaseModel, strict=False, frozen=False, extra="forbid
                 chaser_data_state = content
             elif section == "Chaser_data_covariance":
                 chaser_data_covariance = content
+            else:
+                extras = content
 
         return ConjuctionDataMessage(
             header=header,
             relative_metadata=relative_metadata,
-            values_extra={},
+            values_extra=extras,
             target_metadata=target_metadata,
             target_data_od=target_data_od,
             target_data_state=target_data_state,
@@ -247,37 +203,46 @@ class ConjuctionDataMessage(BaseModel, strict=False, frozen=False, extra="forbid
                 self.chaser_data_covariance[key] = value
 
     def set_state(self, object, state):
-        self.set_object(object, "X", state[0, 0])
-        self.set_object(object, "Y", state[0, 1])
-        self.set_object(object, "Z", state[0, 2])
-        self.set_object(object, "X_DOT", state[1, 0])
-        self.set_object(object, "Y_DOT", state[1, 1])
-        self.set_object(object, "Z_DOT", state[1, 2])
+        for idx, key in enumerate(self.keys_data_state_obligatory):
+            self.set_object(object, key, state[idx // 3, idx % 3])
+            # self.set_object(object, "X", state[0, 0])
+            # self.set_object(object, "Y", state[0, 1])
+            # self.set_object(object, "Z", state[0, 2])
+            # self.set_object(object, "X_DOT", state[1, 0])
+            # self.set_object(object, "Y_DOT", state[1, 1])
+            # self.set_object(object, "Z_DOT", state[1, 2])
         self._update_miss_distance()
         self._update_state_relative()
 
     def set_covariance(self, object, covariance_matrix):
-        self.set_object(object, "CR_R", covariance_matrix[0, 0])
-        self.set_object(object, "CT_R", covariance_matrix[1, 0])
-        self.set_object(object, "CT_T", covariance_matrix[1, 1])
-        self.set_object(object, "CN_R", covariance_matrix[2, 0])
-        self.set_object(object, "CN_T", covariance_matrix[2, 1])
-        self.set_object(object, "CN_N", covariance_matrix[2, 2])
-        self.set_object(object, "CRDOT_R", covariance_matrix[3, 0])
-        self.set_object(object, "CRDOT_T", covariance_matrix[3, 1])
-        self.set_object(object, "CRDOT_N", covariance_matrix[3, 2])
-        self.set_object(object, "CRDOT_RDOT", covariance_matrix[3, 3])
-        self.set_object(object, "CTDOT_R", covariance_matrix[4, 0])
-        self.set_object(object, "CTDOT_T", covariance_matrix[4, 1])
-        self.set_object(object, "CTDOT_N", covariance_matrix[4, 2])
-        self.set_object(object, "CTDOT_RDOT", covariance_matrix[4, 3])
-        self.set_object(object, "CTDOT_TDOT", covariance_matrix[4, 4])
-        self.set_object(object, "CNDOT_R", covariance_matrix[5, 0])
-        self.set_object(object, "CNDOT_T", covariance_matrix[5, 1])
-        self.set_object(object, "CNDOT_N", covariance_matrix[5, 2])
-        self.set_object(object, "CNDOT_RDOT", covariance_matrix[5, 3])
-        self.set_object(object, "CNDOT_TDOT", covariance_matrix[5, 4])
-        self.set_object(object, "CNDOT_NDOT", covariance_matrix[5, 5])
+        for value in self.keys_data_covariance_obligatory:
+            i, j = self.covariance_indices_dict.get(value)
+            if i is not None and j is not None:
+                self.set_object(object, value, covariance_matrix[i, j])
+            else:
+                raise ValueError(f"Invalid covariance key: {value}")
+
+        # self.set_object(object, "CR_R", covariance_matrix[0, 0])
+        # self.set_object(object, "CT_R", covariance_matrix[1, 0])
+        # self.set_object(object, "CT_T", covariance_matrix[1, 1])
+        # self.set_object(object, "CN_R", covariance_matrix[2, 0])
+        # self.set_object(object, "CN_T", covariance_matrix[2, 1])
+        # self.set_object(object, "CN_N", covariance_matrix[2, 2])
+        # self.set_object(object, "CRDOT_R", covariance_matrix[3, 0])
+        # self.set_object(object, "CRDOT_T", covariance_matrix[3, 1])
+        # self.set_object(object, "CRDOT_N", covariance_matrix[3, 2])
+        # self.set_object(object, "CRDOT_RDOT", covariance_matrix[3, 3])
+        # self.set_object(object, "CTDOT_R", covariance_matrix[4, 0])
+        # self.set_object(object, "CTDOT_T", covariance_matrix[4, 1])
+        # self.set_object(object, "CTDOT_N", covariance_matrix[4, 2])
+        # self.set_object(object, "CTDOT_RDOT", covariance_matrix[4, 3])
+        # self.set_object(object, "CTDOT_TDOT", covariance_matrix[4, 4])
+        # self.set_object(object, "CNDOT_R", covariance_matrix[5, 0])
+        # self.set_object(object, "CNDOT_T", covariance_matrix[5, 1])
+        # self.set_object(object, "CNDOT_N", covariance_matrix[5, 2])
+        # self.set_object(object, "CNDOT_RDOT", covariance_matrix[5, 3])
+        # self.set_object(object, "CNDOT_TDOT", covariance_matrix[5, 4])
+        # self.set_object(object, "CNDOT_NDOT", covariance_matrix[5, 5])
 
     def get_object(self, object, key):
         self._object_validation(object)
@@ -297,12 +262,14 @@ class ConjuctionDataMessage(BaseModel, strict=False, frozen=False, extra="forbid
 
     def get_state(self, object):
         state = np.zeros([2, 3])
-        state[0, 0] = self.get_object(object, "X")
-        state[0, 1] = self.get_object(object, "Y")
-        state[0, 2] = self.get_object(object, "Z")
-        state[1, 0] = self.get_object(object, "X_DOT")
-        state[1, 1] = self.get_object(object, "Y_DOT")
-        state[1, 2] = self.get_object(object, "Z_DOT")
+        for idx, key in enumerate(self.keys_data_state_obligatory):
+            state[idx // 3, idx % 3] = self.get_object(object, key)
+        # state[0, 0] = self.get_object(object, "X")
+        # state[0, 1] = self.get_object(object, "Y")
+        # state[0, 2] = self.get_object(object, "Z")
+        # state[1, 0] = self.get_object(object, "X_DOT")
+        # state[1, 1] = self.get_object(object, "Y_DOT")
+        # state[1, 2] = self.get_object(object, "Z_DOT")
         return state
 
     def get_state_relative(self):
@@ -317,27 +284,33 @@ class ConjuctionDataMessage(BaseModel, strict=False, frozen=False, extra="forbid
 
     def get_covariance(self, object):
         covariance = np.zeros([6, 6])
-        covariance[0, 0] = self.get_object(object, "CR_R")
-        covariance[1, 0] = self.get_object(object, "CT_R")
-        covariance[1, 1] = self.get_object(object, "CT_T")
-        covariance[2, 0] = self.get_object(object, "CN_R")
-        covariance[2, 1] = self.get_object(object, "CN_T")
-        covariance[2, 2] = self.get_object(object, "CN_N")
-        covariance[3, 0] = self.get_object(object, "CRDOT_R")
-        covariance[3, 1] = self.get_object(object, "CRDOT_T")
-        covariance[3, 2] = self.get_object(object, "CRDOT_N")
-        covariance[3, 3] = self.get_object(object, "CRDOT_RDOT")
-        covariance[4, 0] = self.get_object(object, "CTDOT_R")
-        covariance[4, 1] = self.get_object(object, "CTDOT_T")
-        covariance[4, 2] = self.get_object(object, "CTDOT_N")
-        covariance[4, 3] = self.get_object(object, "CTDOT_RDOT")
-        covariance[4, 4] = self.get_object(object, "CTDOT_TDOT")
-        covariance[5, 0] = self.get_object(object, "CNDOT_R")
-        covariance[5, 1] = self.get_object(object, "CNDOT_T")
-        covariance[5, 2] = self.get_object(object, "CNDOT_N")
-        covariance[5, 3] = self.get_object(object, "CNDOT_RDOT")
-        covariance[5, 4] = self.get_object(object, "CNDOT_TDOT")
-        covariance[5, 5] = self.get_object(object, "CNDOT_NDOT")
+        for value in self.keys_data_covariance_obligatory:
+            i, j = self.covariance_indices_dict.get(value)
+            if i is not None and j is not None:
+                covariance[i, j] = self.get_object(object, value)
+            else:
+                raise ValueError(f"Invalid covariance key: {value}")
+        # covariance[0, 0] = self.get_object(object, "CR_R")
+        # covariance[1, 0] = self.get_object(object, "CT_R")
+        # covariance[1, 1] = self.get_object(object, "CT_T")
+        # covariance[2, 0] = self.get_object(object, "CN_R")
+        # covariance[2, 1] = self.get_object(object, "CN_T")
+        # covariance[2, 2] = self.get_object(object, "CN_N")
+        # covariance[3, 0] = self.get_object(object, "CRDOT_R")
+        # covariance[3, 1] = self.get_object(object, "CRDOT_T")
+        # covariance[3, 2] = self.get_object(object, "CRDOT_N")
+        # covariance[3, 3] = self.get_object(object, "CRDOT_RDOT")
+        # covariance[4, 0] = self.get_object(object, "CTDOT_R")
+        # covariance[4, 1] = self.get_object(object, "CTDOT_T")
+        # covariance[4, 2] = self.get_object(object, "CTDOT_N")
+        # covariance[4, 3] = self.get_object(object, "CTDOT_RDOT")
+        # covariance[4, 4] = self.get_object(object, "CTDOT_TDOT")
+        # covariance[5, 0] = self.get_object(object, "CNDOT_R")
+        # covariance[5, 1] = self.get_object(object, "CNDOT_T")
+        # covariance[5, 2] = self.get_object(object, "CNDOT_N")
+        # covariance[5, 3] = self.get_object(object, "CNDOT_RDOT")
+        # covariance[5, 4] = self.get_object(object, "CNDOT_TDOT")
+        # covariance[5, 5] = self.get_object(object, "CNDOT_NDOT")
         # Copies lower triangle to the upper part
         covariance = covariance + covariance.T - np.diag(np.diag(covariance))
         return covariance
@@ -580,6 +553,13 @@ class ConjuctionDataMessage(BaseModel, strict=False, frozen=False, extra="forbid
             self.keys_data_covariance_obligatory,
             show_all=show_all,
         )
+
+        ret += "Values_extra:\n"
+        for k, v in self.values_extra.items():
+            if v is None:
+                ret += f" {k}: None\n"
+            else:
+                ret += f" {k}: {v}\n"
 
         return ret
 
