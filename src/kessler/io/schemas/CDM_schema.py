@@ -52,7 +52,7 @@ class InputsSchema(Schema):
     t_cndot_n: papd.Series[padt.Float32] = pa.Field(ge=-1.0, le=1.0)
     t_cndot_rdot: papd.Series[padt.Float32] = pa.Field(ge=-1.0, le=1.0)
     t_cndot_tdot: papd.Series[padt.Float32] = pa.Field(ge=-1.0, le=1.0)
-    c_object_type: papd.Series[padt.String] = pa.Field(
+    c_object_type: papd.Series[str] = pa.Field(
         isin=["UNKNOWN", "DEBRIS", "PAYLOAD", "ROCKET BODY", "TBA"]
     )
     c_time_lastob_start: papd.Series[padt.Float32] = pa.Field(ge=0.0)
@@ -158,5 +158,5 @@ class ExampleSHAPValuesSchema(Schema):
 class ExampleFeatureImportancesSchema(Schema):
     """Schema for the project feature importances."""
 
-    feature: papd.Series[padt.String] = pa.Field()
+    feature: papd.Series[str] = pa.Field()
     importance: papd.Series[padt.Float32] = pa.Field()

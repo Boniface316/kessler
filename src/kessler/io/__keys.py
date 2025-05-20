@@ -1,3 +1,17 @@
+dict_keys = [
+    "header",
+    "relative_metadata",
+    "values_extra",
+    "target_metadata",
+    "target_data_od",
+    "target_data_state",
+    "target_data_covariance",
+    "chaser_metadata",
+    "chaser_data_od",
+    "chaser_data_state",
+    "chaser_data_covariance",
+]
+
 header = ["CCSDS_CDM_VERS", "CREATION_DATE", "ORIGINATOR", "MESSAGE_FOR", "MESSAGE_ID"]
 relative_metadata = [
     "TCA",
@@ -151,6 +165,30 @@ data_covariance_obligatory = [
     "CNDOT_TDOT",
     "CNDOT_NDOT",
 ]
+
+covariance_indices_dict = {
+    "CR_R": (0, 0),
+    "CT_R": (1, 0),
+    "CT_T": (1, 1),
+    "CN_R": (2, 0),
+    "CN_T": (2, 1),
+    "CN_N": (2, 2),
+    "CRDOT_R": (3, 0),
+    "CRDOT_T": (3, 1),
+    "CRDOT_N": (3, 2),
+    "CRDOT_RDOT": (3, 3),
+    "CTDOT_R": (4, 0),
+    "CTDOT_T": (4, 1),
+    "CTDOT_N": (4, 2),
+    "CTDOT_RDOT": (4, 3),
+    "CTDOT_TDOT": (4, 4),
+    "CNDOT_R": (5, 0),
+    "CNDOT_T": (5, 1),
+    "CNDOT_N": (5, 2),
+    "CNDOT_RDOT": (5, 3),
+    "CNDOT_TDOT": (5, 4),
+    "CNDOT_NDOT": (5, 5),
+}
 
 keys_with_dates = [
     "CREATION_DATE",
