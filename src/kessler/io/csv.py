@@ -13,6 +13,7 @@ from ._CDM import CDM
 from ._event import Event, EventDataset
 from ._utils import _from_date_str_to_days
 
+# TODO: use _ as a prefix to eliminate non-column names
 non_column_names = [
     "index",
     "Config",
@@ -89,7 +90,6 @@ class CSVReader(Reader):
 
     KIND: T.Literal["CSVReader"] = "CSVReader"
     path: str
-    limit: int | None = None
     number_of_events: int | None = None
     date_tca: str | None = None
     remove_outliers: bool | None = True
@@ -108,9 +108,6 @@ class CSVReader(Reader):
         else:
             loguru.logger.info(f"File not found at {self.path}. Downloading from {self.url}.")
             data = self._download_data()
-
-        if self.limit is not None:
-            data = data.head(self.limit)
 
         columns_to_keep = [col for col in columns_to_keep if col not in non_column_names]
         missing_columns = [col for col in columns_to_keep if col not in data.columns]
@@ -192,9 +189,9 @@ class CSVReader(Reader):
     def create_event_dataset(self, data_grouped_by_event_id, number_of_events, date_tca):
         events = []
         for i, (event_id, event_data) in enumerate(data_grouped_by_event_id):
-            loguru.logger.warning(f"Processing event {i + 1} with event_id {event_id}")
-            if i > number_of_events:
+            if i > number_of_events - 1:
                 break
+            loguru.logger.warning(f"Processing event {i + 1} with event_id {event_id}")
             first_date_of_event = self._get_creation_date(event_data.time_to_tca.iloc[0], date_tca)
             # first_date_of_event = first_date_of_event.strftime("%Y-%m-%dT%H:%M:%S.%f")
             cdms_per_event_id = self.event_data_to_cdms(
