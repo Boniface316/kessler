@@ -51,6 +51,7 @@ class ConjuctionDataMessage(
     def copy(self):
         return ConjuctionDataMessage(
             header=deepcopy(self.header),
+            values_extra=deepcopy(self.values_extra),
             relative_metadata=deepcopy(self.relative_metadata),
             target_metadata=deepcopy(self.target_metadata),
             target_data_od=deepcopy(self.target_data_od),
@@ -64,6 +65,7 @@ class ConjuctionDataMessage(
 
     def copy_from_other_cdm(self, other_cdm):
         self.header = deepcopy(other_cdm.header)
+        self.values_extra = deepcopy(other_cdm.values_extra)
         self.relative_metadata = deepcopy(other_cdm.relative_metadata)
         self.target_metadata = deepcopy(other_cdm.target_metadata)
         self.target_data_od = deepcopy(other_cdm.target_data_od)
