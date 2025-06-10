@@ -274,7 +274,7 @@ class CSVReader(Reader):
         target_data_state = self.get_state("t", single_cdm_data)
 
         chaser_metadata = self.get_object_metadata(self.OBJECT_2, single_cdm_data)
-        chaser_data_od = self.get_data_od("t", single_cdm_data, creation_date)
+        chaser_data_od = self.get_data_od("c", single_cdm_data, creation_date)
         chaser_data_covariance = self.get_covariance_data("c", single_cdm_data)
         chaser_data_state = self.get_state("c", single_cdm_data)
 
@@ -442,28 +442,38 @@ class CSVReader(Reader):
         }
 
     def get_object_metadata(self, object_name, single_cdm_data):
+        if object_name.lower() == "target":
+            prefix = "t"
+        elif object_name.lower() == "chaser":
+            prefix = "c"
+        else:
+            raise ValueError(f"Unknown object name: {object_name}")
         return {
             "OBJECT": object_name,
-            "OBJECT_DESIGNATOR": single_cdm_data.get("object_designator", None),
-            "CATALOG_NAME": single_cdm_data.get("catalog_name", None),
-            "OBJECT_NAME": single_cdm_data.get("object_name", None),
-            "INTERNATIONAL_DESIGNATOR": single_cdm_data.get("international_designator", None),
-            "OBJECT_TYPE": single_cdm_data.get("object_type", None),
-            "OPERATOR_CONTACT_POSITION": single_cdm_data.get("operator_contact_position", None),
-            "OPERATOR_ORGANIZATION": single_cdm_data.get("operator_organization", None),
-            "OPERATOR_PHONE": single_cdm_data.get("operator_phone", None),
-            "OPERATOR_EMAIL": single_cdm_data.get("operator_email", None),
-            "EPHEMERIS_NAME": single_cdm_data.get("ephemeris_name", None),
-            "COVARIANCE_METHOD": single_cdm_data.get("covariance_method", None),
-            "MANEUVERABLE": single_cdm_data.get("maneuverable", None),
-            "ORBIT_CENTER": single_cdm_data.get("orbit_center", None),
-            "REF_FRAME": single_cdm_data.get("ref_frame", None),
-            "GRAVITY_MODEL": single_cdm_data.get("gravity_model", None),
-            "ATMOSPHERIC_MODEL": single_cdm_data.get("atmospheric_model", None),
-            "N_BODY_PERTURBATIONS": single_cdm_data.get("n_body_perturbations", None),
-            "SOLAR_RAD_PRESSURE": single_cdm_data.get("solar_rad_pressure", None),
-            "EARTH_TIDES": single_cdm_data.get("earth_tides", None),
-            "INTRACK_THRUST": single_cdm_data.get("intrack_thrust", None),
+            "OBJECT_DESIGNATOR": single_cdm_data.get(f"{prefix}_object_designator", None),
+            "CATALOG_NAME": single_cdm_data.get(f"{prefix}_catalog_name", None),
+            "OBJECT_NAME": single_cdm_data.get(f"{prefix}_object_name", None),
+            "INTERNATIONAL_DESIGNATOR": single_cdm_data.get(
+                f"{prefix}_international_designator", None
+            ),
+            "OBJECT_TYPE": single_cdm_data.get(f"{prefix}_object_type", None),
+            "OPERATOR_CONTACT_POSITION": single_cdm_data.get(
+                f"{prefix}_operator_contact_position", None
+            ),
+            "OPERATOR_ORGANIZATION": single_cdm_data.get(f"{prefix}_operator_organization", None),
+            "OPERATOR_PHONE": single_cdm_data.get(f"{prefix}_operator_phone", None),
+            "OPERATOR_EMAIL": single_cdm_data.get(f"{prefix}_operator_email", None),
+            "EPHEMERIS_NAME": single_cdm_data.get(f"{prefix}_ephemeris_name", None),
+            "COVARIANCE_METHOD": single_cdm_data.get(f"{prefix}_covariance_method", None),
+            "MANEUVERABLE": single_cdm_data.get(f"{prefix}_maneuverable", None),
+            "ORBIT_CENTER": single_cdm_data.get(f"{prefix}_orbit_center", None),
+            "REF_FRAME": single_cdm_data.get(f"{prefix}_ref_frame", None),
+            "GRAVITY_MODEL": single_cdm_data.get(f"{prefix}_gravity_model", None),
+            "ATMOSPHERIC_MODEL": single_cdm_data.get(f"{prefix}_atmospheric_model", None),
+            "N_BODY_PERTURBATIONS": single_cdm_data.get(f"{prefix}_n_body_perturbations", None),
+            "SOLAR_RAD_PRESSURE": single_cdm_data.get(f"{prefix}_solar_rad_pressure", None),
+            "EARTH_TIDES": single_cdm_data.get(f"{prefix}_earth_tides", None),
+            "INTRACK_THRUST": single_cdm_data.get(f"{prefix}_intrack_thrust", None),
         }
 
     def _get_creation_date(self, time_to_tca, date_tca):
