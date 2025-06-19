@@ -207,12 +207,6 @@ class ConjuctionDataMessage(
     def set_state(self, object, state):
         for idx, key in enumerate(self.keys_data_state_obligatory):
             self.set_object(object, key, state[idx // 3, idx % 3])
-            # self.set_object(object, "X", state[0, 0])
-            # self.set_object(object, "Y", state[0, 1])
-            # self.set_object(object, "Z", state[0, 2])
-            # self.set_object(object, "X_DOT", state[1, 0])
-            # self.set_object(object, "Y_DOT", state[1, 1])
-            # self.set_object(object, "Z_DOT", state[1, 2])
         self._update_miss_distance()
         self._update_state_relative()
 
@@ -223,28 +217,6 @@ class ConjuctionDataMessage(
                 self.set_object(object, value, covariance_matrix[i, j])
             else:
                 raise ValueError(f"Invalid covariance key: {value}")
-
-        # self.set_object(object, "CR_R", covariance_matrix[0, 0])
-        # self.set_object(object, "CT_R", covariance_matrix[1, 0])
-        # self.set_object(object, "CT_T", covariance_matrix[1, 1])
-        # self.set_object(object, "CN_R", covariance_matrix[2, 0])
-        # self.set_object(object, "CN_T", covariance_matrix[2, 1])
-        # self.set_object(object, "CN_N", covariance_matrix[2, 2])
-        # self.set_object(object, "CRDOT_R", covariance_matrix[3, 0])
-        # self.set_object(object, "CRDOT_T", covariance_matrix[3, 1])
-        # self.set_object(object, "CRDOT_N", covariance_matrix[3, 2])
-        # self.set_object(object, "CRDOT_RDOT", covariance_matrix[3, 3])
-        # self.set_object(object, "CTDOT_R", covariance_matrix[4, 0])
-        # self.set_object(object, "CTDOT_T", covariance_matrix[4, 1])
-        # self.set_object(object, "CTDOT_N", covariance_matrix[4, 2])
-        # self.set_object(object, "CTDOT_RDOT", covariance_matrix[4, 3])
-        # self.set_object(object, "CTDOT_TDOT", covariance_matrix[4, 4])
-        # self.set_object(object, "CNDOT_R", covariance_matrix[5, 0])
-        # self.set_object(object, "CNDOT_T", covariance_matrix[5, 1])
-        # self.set_object(object, "CNDOT_N", covariance_matrix[5, 2])
-        # self.set_object(object, "CNDOT_RDOT", covariance_matrix[5, 3])
-        # self.set_object(object, "CNDOT_TDOT", covariance_matrix[5, 4])
-        # self.set_object(object, "CNDOT_NDOT", covariance_matrix[5, 5])
 
     def get_object(self, object, key):
         self._object_validation(object)
@@ -266,12 +238,6 @@ class ConjuctionDataMessage(
         state = np.zeros([2, 3])
         for idx, key in enumerate(self.keys_data_state_obligatory):
             state[idx // 3, idx % 3] = self.get_object(object, key)
-        # state[0, 0] = self.get_object(object, "X")
-        # state[0, 1] = self.get_object(object, "Y")
-        # state[0, 2] = self.get_object(object, "Z")
-        # state[1, 0] = self.get_object(object, "X_DOT")
-        # state[1, 1] = self.get_object(object, "Y_DOT")
-        # state[1, 2] = self.get_object(object, "Z_DOT")
         return state
 
     def get_state_relative(self):
@@ -292,94 +258,8 @@ class ConjuctionDataMessage(
                 covariance[i, j] = self.get_object(object, value)
             else:
                 raise ValueError(f"Invalid covariance key: {value}")
-        # covariance[0, 0] = self.get_object(object, "CR_R")
-        # covariance[1, 0] = self.get_object(object, "CT_R")
-        # covariance[1, 1] = self.get_object(object, "CT_T")
-        # covariance[2, 0] = self.get_object(object, "CN_R")
-        # covariance[2, 1] = self.get_object(object, "CN_T")
-        # covariance[2, 2] = self.get_object(object, "CN_N")
-        # covariance[3, 0] = self.get_object(object, "CRDOT_R")
-        # covariance[3, 1] = self.get_object(object, "CRDOT_T")
-        # covariance[3, 2] = self.get_object(object, "CRDOT_N")
-        # covariance[3, 3] = self.get_object(object, "CRDOT_RDOT")
-        # covariance[4, 0] = self.get_object(object, "CTDOT_R")
-        # covariance[4, 1] = self.get_object(object, "CTDOT_T")
-        # covariance[4, 2] = self.get_object(object, "CTDOT_N")
-        # covariance[4, 3] = self.get_object(object, "CTDOT_RDOT")
-        # covariance[4, 4] = self.get_object(object, "CTDOT_TDOT")
-        # covariance[5, 0] = self.get_object(object, "CNDOT_R")
-        # covariance[5, 1] = self.get_object(object, "CNDOT_T")
-        # covariance[5, 2] = self.get_object(object, "CNDOT_N")
-        # covariance[5, 3] = self.get_object(object, "CNDOT_RDOT")
-        # covariance[5, 4] = self.get_object(object, "CNDOT_TDOT")
-        # covariance[5, 5] = self.get_object(object, "CNDOT_NDOT")
-        # Copies lower triangle to the upper part
         covariance = covariance + covariance.T - np.diag(np.diag(covariance))
         return covariance
-
-    def _object_validation(self, object):
-        if object not in [
-            self.target_metadata.get("OBJECT"),
-            self.chaser_metadata.get("OBJECT"),
-        ]:
-            raise ValueError(f"Invalid object {object}. Make sure it matches with object metadata.")
-
-    def _get_state_objects(self):
-        state_object1 = self.get_state(self.target_metadata.get("OBJECT"))
-        state_object2 = self.get_state(self.chaser_metadata.get("OBJECT"))
-        for idx, state_object in enumerate([state_object1, state_object2], start=1):
-            object_name = (
-                self.target_metadata.get("OBJECT")
-                if idx == 1
-                else self.chaser_metadata.get("OBJECT")
-            )
-            if np.isnan(state_object.sum()):
-                loguru.logger.warning(f"{object_name} has NaN values in its state.")
-        return state_object1, state_object2
-
-    def _update_miss_distance(self):
-        state_object1, state_object2 = self._get_state_objects()
-        miss_distance = np.linalg.norm(state_object1[0] - state_object2[0])
-        self.set_relative_metadata("MISS_DISTANCE", miss_distance)
-
-    def _update_state_relative(self):
-        state_object1, state_object2 = self._get_state_objects()
-        relative_state = self._relative_state_between_objects(state_object1, state_object2)
-        self.set_relative_metadata("RELATIVE_POSITION_R", relative_state[0, 0])
-        self.set_relative_metadata("RELATIVE_POSITION_T", relative_state[0, 1])
-        self.set_relative_metadata("RELATIVE_POSITION_N", relative_state[0, 2])
-        self.set_relative_metadata("RELATIVE_VELOCITY_R", relative_state[1, 0])
-        self.set_relative_metadata("RELATIVE_VELOCITY_T", relative_state[1, 1])
-        self.set_relative_metadata("RELATIVE_VELOCITY_N", relative_state[1, 2])
-        self.set_relative_metadata("RELATIVE_SPEED", np.linalg.norm(relative_state[1]))
-
-    def __uvw_matrix(self, r, v):
-        u = r / np.linalg.norm(r)
-        w = np.cross(r, v)
-        w = w / np.linalg.norm(w)
-        v = np.cross(w, u)
-        return np.vstack((u, v, w))
-
-    def _relative_state_between_objects(self, state_obj_1, state_obj_2):
-        rot_matrix = self.__uvw_matrix(state_obj_1[0], state_obj_1[1])
-        rel_position_xyz = state_obj_2[0] - state_obj_1[0]
-        rel_velocity_xyz = state_obj_2[1] - state_obj_1[1]
-        relative_state = np.zeros([2, 3])
-        relative_state[0] = np.array(
-            [
-                np.dot(rot_matrix[0], rel_position_xyz),
-                np.dot(rot_matrix[1], rel_position_xyz),
-                np.dot(rot_matrix[2], rel_position_xyz),
-            ]
-        )
-        relative_state[1] = np.array(
-            [
-                np.dot(rot_matrix[0], rel_velocity_xyz),
-                np.dot(rot_matrix[1], rel_velocity_xyz),
-                np.dot(rot_matrix[2], rel_velocity_xyz),
-            ]
-        )
-        return relative_state
 
     def validate(self):
         header_missing_keys = self._validate_or_filter_obligatory_items(
@@ -456,6 +336,70 @@ class ConjuctionDataMessage(
         loguru.logger.info(
             f"Chaser data covariance missing keys: {chaser_data_covariance_missing_keys}"
         )
+
+    def _object_validation(self, object):
+        if object not in [
+            self.target_metadata.get("OBJECT"),
+            self.chaser_metadata.get("OBJECT"),
+        ]:
+            raise ValueError(f"Invalid object {object}. Make sure it matches with object metadata.")
+
+    def _get_state_objects(self):
+        state_object1 = self.get_state(self.target_metadata.get("OBJECT"))
+        state_object2 = self.get_state(self.chaser_metadata.get("OBJECT"))
+        for idx, state_object in enumerate([state_object1, state_object2], start=1):
+            object_name = (
+                self.target_metadata.get("OBJECT")
+                if idx == 1
+                else self.chaser_metadata.get("OBJECT")
+            )
+            if np.isnan(state_object.sum()):
+                loguru.logger.warning(f"{object_name} has NaN values in its state.")
+        return state_object1, state_object2
+
+    def _update_miss_distance(self):
+        state_object1, state_object2 = self._get_state_objects()
+        miss_distance = np.linalg.norm(state_object1[0] - state_object2[0])
+        self.set_relative_metadata("MISS_DISTANCE", miss_distance)
+
+    def _update_state_relative(self):
+        state_object1, state_object2 = self._get_state_objects()
+        relative_state = self._relative_state_between_objects(state_object1, state_object2)
+        self.set_relative_metadata("RELATIVE_POSITION_R", relative_state[0, 0])
+        self.set_relative_metadata("RELATIVE_POSITION_T", relative_state[0, 1])
+        self.set_relative_metadata("RELATIVE_POSITION_N", relative_state[0, 2])
+        self.set_relative_metadata("RELATIVE_VELOCITY_R", relative_state[1, 0])
+        self.set_relative_metadata("RELATIVE_VELOCITY_T", relative_state[1, 1])
+        self.set_relative_metadata("RELATIVE_VELOCITY_N", relative_state[1, 2])
+        self.set_relative_metadata("RELATIVE_SPEED", np.linalg.norm(relative_state[1]))
+
+    def __uvw_matrix(self, r, v):
+        u = r / np.linalg.norm(r)
+        w = np.cross(r, v)
+        w = w / np.linalg.norm(w)
+        v = np.cross(w, u)
+        return np.vstack((u, v, w))
+
+    def _relative_state_between_objects(self, state_obj_1, state_obj_2):
+        rot_matrix = self.__uvw_matrix(state_obj_1[0], state_obj_1[1])
+        rel_position_xyz = state_obj_2[0] - state_obj_1[0]
+        rel_velocity_xyz = state_obj_2[1] - state_obj_1[1]
+        relative_state = np.zeros([2, 3])
+        relative_state[0] = np.array(
+            [
+                np.dot(rot_matrix[0], rel_position_xyz),
+                np.dot(rot_matrix[1], rel_position_xyz),
+                np.dot(rot_matrix[2], rel_position_xyz),
+            ]
+        )
+        relative_state[1] = np.array(
+            [
+                np.dot(rot_matrix[0], rel_velocity_xyz),
+                np.dot(rot_matrix[1], rel_velocity_xyz),
+                np.dot(rot_matrix[2], rel_velocity_xyz),
+            ]
+        )
+        return relative_state
 
     def _validate_or_filter_obligatory_items(
         self,
@@ -657,13 +601,13 @@ class ConjuctionDataMessage(
 
         return time_format
 
-    def __hash__(self):
-        return hash(self.key_value_notation(), show_all=True)
-
     def __eq__(self, other):
-        if isinstance(other, ConjuctionDataMessage):
-            return self.key_value_notation(show_all=True) == hash(other)
+        if isinstance(other, CDM):
+            return hash(self) == hash(other)
         return False
+
+    def __hash__(self):
+        return hash(self._key_value_notation(show_all=True))
 
     def __repr__(self):
         return self._key_value_notation()
