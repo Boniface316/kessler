@@ -194,6 +194,8 @@ class ConjuctionDataMessage(
                 self.target_data_state[key] = value
             elif key in self.target_data_covariance.keys():
                 self.target_data_covariance[key] = value
+            else:
+                raise KeyError(f"Key {key} not found in target data.")
         else:
             if key in self.chaser_metadata.keys():
                 self.chaser_metadata[key] = value
@@ -203,6 +205,8 @@ class ConjuctionDataMessage(
                 self.chaser_data_state[key] = value
             elif key in self.chaser_data_covariance.keys():
                 self.chaser_data_covariance[key] = value
+            else:
+                raise KeyError(f"Key {key} not found in chaser data.")
 
     def set_state(self, object, state):
         for idx, key in enumerate(self.keys_data_state_obligatory):
