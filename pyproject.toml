@@ -22,6 +22,8 @@ dependencies = [
     "torch>=2.5.1",
     "gtasks @git+https://github.com/Boniface316/tasks.git",
     "invoke>=2.2.0",
+    "ipykernel>=6.29.5",
+    "ipython>=9.3.0",
 ]
 license = { file = "LICENSE.md" }
 keywords = ["mlops", "python", "package"]
