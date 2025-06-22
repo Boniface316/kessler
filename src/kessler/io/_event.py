@@ -48,6 +48,9 @@ class Event(BaseModel, arbitrary_types_allowed=True):
     def to_dataframe(self):
         if self.data_frame is None:
             self.data_frame = [cdm.to_dataframe() for cdm in self.cdms]
+            self.data_frame = pd.concat(self.data_frame, ignore_index=True)
+        else:
+            loguru.logger.warning("DataFrame already exists, returning the existing one.")
 
         return self.data_frame
 
