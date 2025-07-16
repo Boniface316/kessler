@@ -206,7 +206,7 @@ class EventDataset(BaseModel):
     def to_dataframe(self):
         event_dataframes = []
         for event in self.events:
-            event_dataframes.extend(event.to_dataframe())
+            event_dataframes.append(event.to_dataframe())
         return pd.concat(event_dataframes, ignore_index=True)
 
     # TODO: verify the output with the original
