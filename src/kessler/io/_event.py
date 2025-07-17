@@ -1,15 +1,17 @@
-from pydantic import BaseModel, field_validator
-from ._CDM import CDM
 import copy
-import pandas as pd
 import os
-import loguru
 import re
-from glob import glob
-from .__keys import header, relative_metadata, metadata, data_state, data_covariance
-from ._utils import _from_date_str_to_days, _add_days_to_date_str
 from datetime import datetime
+from glob import glob
+
+import loguru
 import numpy as np
+import pandas as pd
+from pydantic import BaseModel, field_validator
+
+from .__keys import data_covariance, data_state, header, metadata, relative_metadata
+from ._CDM import CDM
+from ._utils import _add_days_to_date_str, _from_date_str_to_days
 
 
 class Event(BaseModel, arbitrary_types_allowed=True):
@@ -209,16 +211,15 @@ class EventDataset(BaseModel):
             event_dataframes.append(event.to_dataframe())
         return pd.concat(event_dataframes, ignore_index=True)
 
-    # TODO: verify the output with the original
     def dates(self, _add_days_to_date_str=_add_days_to_date_str):
         print("CDM| CREATION_DATE (mean)       | Days (mean, std)  | Days to TCA (mean, std)")
         for i in range(self.event_lengths_max):
             creation_date_days = []
             days_to_tca = []
             for event in self.events:
-                for cdm in event.cdms:
-                    creation_date_days.append(cdm.values_extra.get("__CREATION_DATE"))
-                    days_to_tca.append(cdm.values_extra.get("__DAYS_TO_TCA"))
+                if i < len(event):
+                    creation_date_days.append(event[i].values_extra.get("CREATION_DATE_IN_DAYS"))
+                    days_to_tca.append(event[i].values_extra.get("DAYS_TO_TCA"))
 
             creation_date_days = np.array(creation_date_days)
             creation_date_days_mean, creation_date_days_stddev = (
@@ -254,7 +255,7 @@ class EventDataset(BaseModel):
 
     @property
     def event_lengths_max(self):
-        return min(self.event_lengths)
+        return max(self.event_lengths)
 
     @property
     def event_lengths_mean(self):
