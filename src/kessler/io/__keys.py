@@ -12,7 +12,7 @@ dict_keys = [
     "chaser_data_covariance",
 ]
 
-header = ["CCSDS_CDM_VERS", "CREATION_DATE", "ORIGINATOR", "MESSAGE_FOR", "MESSAGE_ID"]
+header = ["CCSDS_CDM_VERS", "EVENT_ID", "CREATION_DATE", "ORIGINATOR", "MESSAGE_FOR", "MESSAGE_ID"]
 relative_metadata = [
     "TCA",
     "MISS_DISTANCE",
