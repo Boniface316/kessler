@@ -119,7 +119,6 @@ class EventDataset(BaseModel):
         df_events = df.groupby(groups_events_by)
         events = []
         cdms = []
-        # TODO: Verify the date format and compare it to original
         for event_id, event_data in df_events:
             first_date_of_event_str = event_data["CREATION_DATE"].iloc[0]
             first_date_of_event = datetime.strptime(first_date_of_event_str, "%Y-%m-%dT%H:%M:%S.%f")
@@ -183,9 +182,9 @@ class EventDataset(BaseModel):
                 }
 
                 values_extra = {
-                    "__CREATION_DATE": __creation_date,
-                    "__TCA": __TCA,
-                    "__DAYS_TO_TCA": __DAYS_TO_TCA,
+                    "CREATION_DATE": __creation_date,
+                    "TCA": __TCA,
+                    "DAYS_TO_TCA": __DAYS_TO_TCA,
                 }
 
                 single_cdm = CDM(
@@ -271,8 +270,8 @@ class EventDataset(BaseModel):
         if only_numeric:
             df = df.select_dtypes(include=["int", "float64", "float32"])
         features = list(df.columns)
-        if "__DAYS_TO_TCA" in features:
-            features.remove("__DAYS_TO_TCA")
+        if "DAYS_TO_TCA" in features:
+            features.remove("DAYS_TO_TCA")
         return features
 
     def get_CDMs(self):
@@ -282,10 +281,9 @@ class EventDataset(BaseModel):
                 cdms.append(cdm)
         return cdms
 
-    # TODO: figure out how this is being used
     def filter(self, filter_function):
         events = []
-        for event in self:
+        for event in self.events:
             if filter_function(event):
                 events.append(event)
         return EventDataset(events=events)
