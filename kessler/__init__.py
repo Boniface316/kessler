@@ -14,3 +14,4 @@ __version__ = '0.1.2.dev3'
 from .util import seed
 from .cdm import ConjunctionDataMessage, CDM
 from .event import Event, EventDataset
+from . import io

@@ -15,7 +15,7 @@ import uuid
 import os
 import pandas as pd
 
-from kessler import EventDataset
+from kessler.io import from_pandas
 
 
 class EventDatasetTestCase(unittest.TestCase):
@@ -36,7 +36,7 @@ class EventDatasetTestCase(unittest.TestCase):
         df = pd.read_csv(file_name)  # Read the csv
 
         # Make EventDataset from Pandas DataFrame
-        e = EventDataset.from_pandas(df)
+        e = from_pandas(df)
 
         # Make Pandas DataFrame from EventDataset
         df = e.to_dataframe()
