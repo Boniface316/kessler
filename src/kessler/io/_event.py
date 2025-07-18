@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 from pydantic import BaseModel, field_validator
 
-from .__keys import data_covariance, data_state, header, metadata, relative_metadata
+from .__keys import data_covariance, data_od, data_state, header, metadata, relative_metadata
 from ._CDM import CDM
 from ._utils import _add_days_to_date_str, _from_date_str_to_days
 
@@ -110,11 +110,12 @@ class EventDataset(BaseModel):
         relative_metadata=relative_metadata,
         object_metadata=metadata,
         data_state=data_state,
+        data_od=data_od,
         data_covariance=data_covariance,
         from_date_str_to_days=_from_date_str_to_days,
     ):
         loguru.logger.info(f"Dataframe with {len(df)} rows and {len(df.columns)} columns")
-        df = df.dropna(axis=1)
+        # df = df.dropna(axis=1)
         column_names_after_dropping = list(df.columns)
         df_events = df.groupby(groups_events_by)
         events = []
@@ -129,48 +130,49 @@ class EventDataset(BaseModel):
                     for header in header
                     if header in column_names_after_dropping
                 }
+
                 relative_metadata_dict = {
                     relative_metadata: single_cdm[relative_metadata]
                     for relative_metadata in relative_metadata
                     if relative_metadata in column_names_after_dropping
                 }
                 target_metadata_dict = {
-                    f"t_{target_metadata}": single_cdm["t_" + target_metadata]
+                    target_metadata: single_cdm["t_" + target_metadata]
                     for target_metadata in object_metadata
                     if "t_" + target_metadata in column_names_after_dropping
                 }
                 target_data_od_dict = {
-                    f"t_{target_data_od}": single_cdm["t_" + target_data_od]
-                    for target_data_od in object_metadata
+                    target_data_od: single_cdm["t_" + target_data_od]
+                    for target_data_od in data_od
                     if "t_" + target_data_od in column_names_after_dropping
                 }
                 target_data_state_dict = {
-                    f"t_{target_data_state}": single_cdm["t_" + target_data_state]
+                    target_data_state: single_cdm["t_" + target_data_state]
                     for target_data_state in data_state
                     if "t_" + target_data_state in column_names_after_dropping
                 }
                 target_data_covariance_dict = {
-                    f"t_{target_data_covariance}": single_cdm["t_" + target_data_covariance]
+                    target_data_covariance: single_cdm["t_" + target_data_covariance]
                     for target_data_covariance in data_covariance
                     if "t_" + target_data_covariance in column_names_after_dropping
                 }
                 chaser_metadata_dict = {
-                    f"c_{chaser_metadata}": single_cdm["c_" + chaser_metadata]
+                    chaser_metadata: single_cdm["c_" + chaser_metadata]
                     for chaser_metadata in object_metadata
                     if "c_" + chaser_metadata in column_names_after_dropping
                 }
                 chaser_data_od_dict = {
-                    f"c_{chaser_data_od}": single_cdm["c_" + chaser_data_od]
-                    for chaser_data_od in object_metadata
+                    chaser_data_od: single_cdm["c_" + chaser_data_od]
+                    for chaser_data_od in data_od
                     if "c_" + chaser_data_od in column_names_after_dropping
                 }
                 chaser_data_state_dict = {
-                    f"c_{chaser_data_state}": single_cdm["c_" + chaser_data_state]
+                    chaser_data_state: single_cdm["c_" + chaser_data_state]
                     for chaser_data_state in data_state
                     if "c_" + chaser_data_state in column_names_after_dropping
                 }
                 chaser_data_covariance_dict = {
-                    f"c_{chaser_data_covariance}": single_cdm["c_" + chaser_data_covariance]
+                    chaser_data_covariance: single_cdm["c_" + chaser_data_covariance]
                     for chaser_data_covariance in data_covariance
                     if "c_" + chaser_data_covariance in column_names_after_dropping
                 }
