@@ -118,18 +118,12 @@ class EventDataset(BaseModel):
         column_names_after_dropping = list(df.columns)
         df_events = df.groupby(groups_events_by)
         events = []
-        cdms = []
+
         for event_id, event_data in df_events:
+            cdms = []
             first_date_of_event_str = event_data["CREATION_DATE"].iloc[0]
             first_date_of_event = datetime.strptime(first_date_of_event_str, "%Y-%m-%dT%H:%M:%S.%f")
             for _, single_cdm in event_data.iterrows():
-                TCA = single_cdm["TCA"]
-                creation_date_str = single_cdm["CREATION_DATE"]
-
-                __creation_date = _from_date_str_to_days(creation_date_str, first_date_of_event)
-                __TCA = _from_date_str_to_days(TCA, first_date_of_event)
-                __DAYS_TO_TCA = __TCA - __creation_date
-
                 header_dict = {
                     header: single_cdm[header]
                     for header in header
@@ -182,9 +176,9 @@ class EventDataset(BaseModel):
                 }
 
                 values_extra = {
-                    "CREATION_DATE": __creation_date,
-                    "TCA": __TCA,
-                    "DAYS_TO_TCA": __DAYS_TO_TCA,
+                    "CREATION_DATE_IN_DAYS": single_cdm["CREATION_DATE"],
+                    "TCA_IN_DAYS": single_cdm["TCA_IN_DAYS"],
+                    "DAYS_TO_TCA": single_cdm["DAYS_TO_TCA"],
                 }
 
                 single_cdm = CDM(
