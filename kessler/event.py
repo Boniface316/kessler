@@ -190,8 +190,6 @@ class EventDataset():
         else:
             self._events = events
 
-
-
     def to_dataframe(self):
         if len(self) == 0:
             return pd.DataFrame()
