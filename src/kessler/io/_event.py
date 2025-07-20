@@ -1,7 +1,6 @@
 import copy
 import os
 import re
-from datetime import datetime
 from glob import glob
 
 import loguru
@@ -115,15 +114,12 @@ class EventDataset(BaseModel):
         from_date_str_to_days=_from_date_str_to_days,
     ):
         loguru.logger.info(f"Dataframe with {len(df)} rows and {len(df.columns)} columns")
-        # df = df.dropna(axis=1)
         column_names_after_dropping = list(df.columns)
         df_events = df.groupby(groups_events_by)
         events = []
 
-        for event_id, event_data in df_events:
+        for _, event_data in df_events:
             cdms = []
-            first_date_of_event_str = event_data["CREATION_DATE"].iloc[0]
-            first_date_of_event = datetime.strptime(first_date_of_event_str, "%Y-%m-%dT%H:%M:%S.%f")
             for _, single_cdm in event_data.iterrows():
                 header_dict = {
                     header: single_cdm[header]
