@@ -1,14 +1,15 @@
 # Event
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from pydantic import BaseModel, field_validator
+
 from ..io._event import EventDataset
 
 
 class Plot(BaseModel):
     events: EventDataset
-    diagonal_features = [
+    diagonal_features: list = [
         "CR_R",
         "CT_T",
         "CN_N",
@@ -17,7 +18,7 @@ class Plot(BaseModel):
         "CNDOT_NDOT",
     ]
 
-    non_diagonal_features = [
+    non_diagonal_features: list = [
         "CR_R",
         "CT_R",
         "CT_T",
