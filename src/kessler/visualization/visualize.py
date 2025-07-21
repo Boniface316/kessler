@@ -70,6 +70,9 @@ class Plot(BaseModel):
         if event_ids is None:
             event_ids = events_df["EVENT_ID"].unique()
 
+        if isinstance(event_ids, int):
+            event_ids = [event_ids]
+
         for event_id in event_ids:
             event = events_df[events_df["EVENT_ID"] == event_id]
 
