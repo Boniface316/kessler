@@ -131,7 +131,7 @@ class Plot(BaseModel):
         if not isinstance(feature_names, list):
             feature_names = [feature_names]
         if axs is None:
-            rows, cols = self._tile_rows_cols(len(feature_names))
+            rows, cols = self._title_rows_cols(len(feature_names))
             if figsize is None:
                 figsize = (cols * 20 / 7, rows * 12 / 6)
             fig, axs = plt.subplots(rows, cols, figsize=figsize, sharex=sharex)
