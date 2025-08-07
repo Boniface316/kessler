@@ -5,42 +5,14 @@ import numpy as np
 from pydantic import BaseModel, field_validator
 
 from ..io._event import EventDataset
+from .__keys import diagonal_features, non_diagonal_features
 
 
 class Plot(BaseModel):
     events: EventDataset
-    diagonal_features: list = [
-        "CR_R",
-        "CT_T",
-        "CN_N",
-        "CRDOT_RDOT",
-        "CTDOT_TDOT",
-        "CNDOT_NDOT",
-    ]
+    diagonal_features: list = diagonal_features
 
-    non_diagonal_features: list = [
-        "CR_R",
-        "CT_R",
-        "CT_T",
-        "CN_R",
-        "CN_T",
-        "CN_N",
-        "CRDOT_R",
-        "CRDOT_T",
-        "CRDOT_N",
-        "CRDOT_RDOT",
-        "CTDOT_R",
-        "CTDOT_T",
-        "CTDOT_N",
-        "CTDOT_RDOT",
-        "CTDOT_TDOT",
-        "CNDOT_R",
-        "CNDOT_T",
-        "CNDOT_N",
-        "CNDOT_RDOT",
-        "CNDOT_TDOT",
-        "CNDOT_NDOT",
-    ]
+    non_diagonal_features: list = non_diagonal_features
 
     @field_validator("events")
     def check_events(cls, v):
