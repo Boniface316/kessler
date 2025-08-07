@@ -1,19 +1,21 @@
-from pydantic import BaseModel
 from copy import deepcopy
-import pandas as pd
-import numpy as np
-import yaml
 from datetime import datetime, timedelta
+
 import loguru
+import numpy as np
+import pandas as pd
+import yaml
+from pydantic import BaseModel
+
 from .__keys import (
-    header_obligatory,
-    relative_metadata_obligatory,
-    metadata_obligatory,
-    data_od_obligatory,
-    data_state_obligatory,
-    data_covariance_obligatory,
-    dict_keys,
     covariance_indices_dict,
+    data_covariance_obligatory_list,
+    data_od_obligatory_list,
+    data_state_obligatory_list,
+    dict_keys,
+    header_obligatory_list,
+    metadata_obligatory_list,
+    relative_metadata_obligatory_list,
 )
 
 
@@ -37,13 +39,13 @@ class ConjuctionDataMessage(
     chaser_data_state: dict
     chaser_data_covariance: dict
 
-    keys_header_obligatory: list = header_obligatory
-    keys_relative_metadata_obligatory: list = relative_metadata_obligatory
-    keys_metadata_obligatory: list = metadata_obligatory
-    keys_data_od_obligatory: list = data_od_obligatory
+    keys_header_obligatory: list = header_obligatory_list
+    keys_relative_metadata_obligatory: list = relative_metadata_obligatory_list
+    keys_metadata_obligatory: list = metadata_obligatory_list
+    keys_data_od_obligatory: list = data_od_obligatory_list
+    keys_data_state_obligatory: list = data_state_obligatory_list
+    keys_data_covariance_obligatory: list = data_covariance_obligatory_list
 
-    keys_data_state_obligatory: list = data_state_obligatory
-    keys_data_covariance_obligatory: list = data_covariance_obligatory
     covariance_indices_dict: dict = covariance_indices_dict
 
     dict_keys: list = dict_keys

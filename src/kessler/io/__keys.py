@@ -12,8 +12,15 @@ dict_keys = [
     "chaser_data_covariance",
 ]
 
-header = ["CCSDS_CDM_VERS", "EVENT_ID", "CREATION_DATE", "ORIGINATOR", "MESSAGE_FOR", "MESSAGE_ID"]
-relative_metadata = [
+header_list = [
+    "CCSDS_CDM_VERS",
+    "EVENT_ID",
+    "CREATION_DATE",
+    "ORIGINATOR",
+    "MESSAGE_FOR",
+    "MESSAGE_ID",
+]
+relative_metadata_list = [
     "TCA",
     "MISS_DISTANCE",
     "RELATIVE_SPEED",
@@ -35,7 +42,7 @@ relative_metadata = [
     "COLLISION_PROBABILITY",
     "COLLISION_PROBABILITY_METHOD",
 ]
-metadata = [
+object_metadata_list = [
     "OBJECT",
     "OBJECT_DESIGNATOR",
     "CATALOG_NAME",
@@ -58,7 +65,7 @@ metadata = [
     "EARTH_TIDES",
     "INTRACK_THRUST",
 ]
-data_od = [
+data_od_list = [
     "TIME_LASTOB_START",
     "TIME_LASTOB_END",
     "RECOMMENDED_OD_SPAN",
@@ -78,8 +85,8 @@ data_od = [
     "THRUST_ACCELERATION",
     "SEDR",
 ]
-data_state = ["X", "Y", "Z", "X_DOT", "Y_DOT", "Z_DOT"]
-data_covariance = [
+data_state_list = ["X", "Y", "Z", "X_DOT", "Y_DOT", "Z_DOT"]
+data_covariance_list = [
     "CR_R",
     "CT_R",
     "CT_T",
@@ -127,9 +134,9 @@ data_covariance = [
     "CTHR_THR",
 ]
 
-header_obligatory = ["CCSDS_CDM_VERS", "CREATION_DATE", "ORIGINATOR", "MESSAGE_ID"]
-relative_metadata_obligatory = ["TCA", "MISS_DISTANCE"]
-metadata_obligatory = [
+header_obligatory_list = ["CCSDS_CDM_VERS", "CREATION_DATE", "ORIGINATOR", "MESSAGE_ID"]
+relative_metadata_obligatory_list = ["TCA", "MISS_DISTANCE"]
+metadata_obligatory_list = [
     "OBJECT",
     "OBJECT_DESIGNATOR",
     "CATALOG_NAME",
@@ -140,9 +147,9 @@ metadata_obligatory = [
     "MANEUVERABLE",
     "REF_FRAME",
 ]
-data_od_obligatory = []
-data_state_obligatory = ["X", "Y", "Z", "X_DOT", "Y_DOT", "Z_DOT"]
-data_covariance_obligatory = [
+data_od_obligatory_list = []
+data_state_obligatory_list = ["X", "Y", "Z", "X_DOT", "Y_DOT", "Z_DOT"]
+data_covariance_obligatory_list = [
     "CR_R",
     "CT_R",
     "CT_T",
@@ -201,39 +208,4 @@ keys_with_dates = [
     "OBJECT1_TIME_LASTOB_END",
     "OBJECT2_TIME_LASTOB_START",
     "OBJECT2_TIME_LASTOB_END",
-]
-
-
-diagonal_features = [
-    "CR_R",
-    "CT_T",
-    "CN_N",
-    "CRDOT_RDOT",
-    "CTDOT_TDOT",
-    "CNDOT_NDOT",
-]
-
-
-non_diagonal_features = [
-    "CR_R",
-    "CT_R",
-    "CT_T",
-    "CN_R",
-    "CN_T",
-    "CN_N",
-    "CRDOT_R",
-    "CRDOT_T",
-    "CRDOT_N",
-    "CRDOT_RDOT",
-    "CTDOT_R",
-    "CTDOT_T",
-    "CTDOT_N",
-    "CTDOT_RDOT",
-    "CTDOT_TDOT",
-    "CNDOT_R",
-    "CNDOT_T",
-    "CNDOT_N",
-    "CNDOT_RDOT",
-    "CNDOT_TDOT",
-    "CNDOT_NDOT",
 ]
