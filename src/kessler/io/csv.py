@@ -23,7 +23,7 @@ from ._event import Event, EventDataset
 from ._utils import _from_date_str_to_days
 
 
-class CSVReader(Reader):
+class CSVReader_update(Reader):
     """Read a dataframe dataset in csv format."""
 
     KIND: T.Literal["CSVReader"] = "CSVReader"
