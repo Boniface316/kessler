@@ -221,6 +221,11 @@ def _download_data(self) -> pd.DataFrame:
     - The ZIP archive contains a file that should be extracted to the directory of `self.path`.
     - After extraction, the data is read from `self.path` using `pandas.read_csv`.
 
+    Args:
+        self (object): An instance of the class containing attributes:
+            - url (str): The URL pointing to the ZIP archive to download.
+            - path (str): The local file path where the extracted file will be saved and read from.
+
     Returns:
         pd.DataFrame: The dataset loaded into a pandas DataFrame.
 
@@ -367,24 +372,22 @@ def single_event_to_cdm(
     """
     Converts a single CDM (Conjunction Data Message) event row into a structured CDM object.
 
-    Parameters:
-    ----------
-    single_cdm_data : pd.DataFrame
-        A DataFrame containing CDM data for a single conjunction event.
-    date_tca : datetime
-        Time of Closest Approach (TCA) for the event.
-    event_id : str
-        Unique identifier for the conjunction event.
-    first_date_of_event : datetime
-        Reference date for converting timestamps into relative days.
-    _from_date_str_to_days : Callable[[str, datetime], float], optional
-        Function to convert datetime string into float days since `first_date_of_event`.
+    Args:
+        single_cdm_data : pd.DataFrame
+            A DataFrame containing CDM data for a single conjunction event.
+        date_tca : datetime
+            Time of Closest Approach (TCA) for the event.
+        event_id : str
+            Unique identifier for the conjunction event.
+        first_date_of_event : datetime
+            Reference date for converting timestamps into relative days.
+        _from_date_str_to_days : Callable[[str, datetime], float], optional
+            Function to convert datetime string into float days since `first_date_of_event`.
 
     Returns:
-    -------
-    CDM
-        A structured CDM object containing metadata, orbit data, and relative state data
-        for the target and chaser objects involved in the event.
+        CDM
+            A structured CDM object containing metadata, orbit data, and relative state data
+            for the target and chaser objects involved in the event.
     """
     creation_date = self._get_creation_date(single_cdm_data["time_to_tca"], date_tca)
 
@@ -465,21 +468,19 @@ def get_data_od(
     Extracts orbit determination (OD) related metadata for a specified object
     (target or chaser) involved in a conjunction event.
 
-    Parameters:
-    ----------
-    column_prefix : str
-        Prefix used to identify the object (e.g., 't' for target, 'c' for chaser).
-    single_cdm_data : Dict[str, Any]
-        Dictionary containing CDM data fields for a single conjunction event.
-    creation_date : datetime
-        The creation date of the CDM, used as a reference to compute
-        absolute timestamps from relative day values.
+    Args:
+        column_prefix : str
+            Prefix used to identify the object (e.g., 't' for target, 'c' for chaser).
+        single_cdm_data : Dict[str, Any]
+            Dictionary containing CDM data fields for a single conjunction event.
+        creation_date : datetime
+            The creation date of the CDM, used as a reference to compute
+            absolute timestamps from relative day values.
 
     Returns:
-    -------
-    Dict[str, Any]
-        A dictionary containing OD-related metadata fields including observation
-        spans, mass properties, area ratios, and observation timestamps.
+        Dict[str, Any]
+            A dictionary containing OD-related metadata fields including observation
+            spans, mass properties, area ratios, and observation timestamps.
     """
     time_lastob_start = single_cdm_data.get(f"{column_prefix}_time_lastob_start", None)
     time_lastob_start = creation_date - timedelta(days=time_lastob_start)
@@ -519,20 +520,18 @@ def get_covariance_data(
     The covariance data is derived from sigma values and correlation coefficients
     in the RTN (Radial, Transverse, Normal) frame and their time derivatives (e.g., R, R_dot, etc.).
 
-    Parameters:
-    ----------
-    column_prefix : str
-        Prefix used to identify the object ('t' for target, 'c' for chaser).
-    single_cdm_data : Dict[str, Any]
-        Dictionary containing all relevant CDM fields for a single conjunction event.
+    Args:
+        column_prefix : str
+            Prefix used to identify the object ('t' for target, 'c' for chaser).
+        single_cdm_data : Dict[str, Any]
+            Dictionary containing all relevant CDM fields for a single conjunction event.
 
     Returns:
-    -------
-    Dict[str, Any]
-        A dictionary containing computed and raw covariance values including:
-        - Variances (sigma²)
-        - Covariances (correlation * sigma products)
-        - Optional force-related covariance terms (e.g., drag, SRP, thrust)
+        Dict[str, Any]
+            A dictionary containing computed and raw covariance values including:
+            Variances (sigma²)
+            Covariances (correlation * sigma products)
+            Optional force-related covariance terms (e.g., drag, SRP, thrust)
     """
     return {
         # Position covariance terms
@@ -654,20 +653,18 @@ def get_state(
     """
     Extracts the Cartesian state vector components for the specified object.
 
-    Parameters:
-    ----------
-    column_prefix : str
-        Prefix indicating the object ('t' for target, 'c' for chaser).
-    single_cdm_data : Dict[str, Any]
-        Dictionary containing all relevant CDM data fields.
+    Args:
+        column_prefix : str
+            Prefix indicating the object ('t' for target, 'c' for chaser).
+        single_cdm_data : Dict[str, Any]
+            Dictionary containing all relevant CDM data fields.
 
     Returns:
-    -------
-    Dict[str, Optional[float]]
-        A dictionary containing position and velocity components:
-        - X, Y, Z: Cartesian position coordinates
-        - X_DOT, Y_DOT, Z_DOT: Cartesian velocity components
-        Values may be None if not present in the input data.
+        Dict[str, Optional[float]]
+            A dictionary containing position and velocity components:
+            X, Y, Z: Cartesian position coordinates
+            X_DOT, Y_DOT, Z_DOT: Cartesian velocity components
+            Values may be None if not present in the input data.
     """
     return {
         "X": single_cdm_data.get(f"{column_prefix}_x", None),
@@ -685,30 +682,27 @@ def get_object_metadata(
     """
     Retrieves metadata information for a specified object ('target' or 'chaser') from the CDM data.
 
-    Parameters
-    ----------
-    object_name : str
-        The name of the object to retrieve metadata for. Expected values: 'target' or 'chaser' (case-insensitive).
-    single_cdm_data : Dict[str, Any]
-        Dictionary containing all relevant CDM data fields.
+    Args:
+        object_name : str
+            The name of the object to retrieve metadata for. Expected values: 'target' or 'chaser' (case-insensitive).
+        single_cdm_data : Dict[str, Any]
+            Dictionary containing all relevant CDM data fields.
 
-    Returns
-    -------
-    Dict[str, Optional[Any]]
-        A dictionary containing metadata attributes for the specified object.
-        The keys include:
-        - OBJECT: The provided object_name
-        - OBJECT_DESIGNATOR, CATALOG_NAME, OBJECT_NAME, INTERNATIONAL_DESIGNATOR, OBJECT_TYPE,
-          OPERATOR_CONTACT_POSITION, OPERATOR_ORGANIZATION, OPERATOR_PHONE, OPERATOR_EMAIL,
-          EPHEMERIS_NAME, COVARIANCE_METHOD, MANEUVERABLE, ORBIT_CENTER, REF_FRAME,
-          GRAVITY_MODEL, ATMOSPHERIC_MODEL, N_BODY_PERTURBATIONS, SOLAR_RAD_PRESSURE,
-          EARTH_TIDES, INTRACK_THRUST
-        Values may be None if the field is not present in `single_cdm_data`.
+    Returns:
+        Dict[str, Optional[Any]]
+            A dictionary containing metadata attributes for the specified object.
+            The keys include:
+            OBJECT: The provided object_name
+            OBJECT_DESIGNATOR, CATALOG_NAME, OBJECT_NAME, INTERNATIONAL_DESIGNATOR, OBJECT_TYPE,
+              OPERATOR_CONTACT_POSITION, OPERATOR_ORGANIZATION, OPERATOR_PHONE, OPERATOR_EMAIL,
+              EPHEMERIS_NAME, COVARIANCE_METHOD, MANEUVERABLE, ORBIT_CENTER, REF_FRAME,
+              GRAVITY_MODEL, ATMOSPHERIC_MODEL, N_BODY_PERTURBATIONS, SOLAR_RAD_PRESSURE,
+              EARTH_TIDES, INTRACK_THRUST
+            Values may be None if the field is not present in `single_cdm_data`.
 
     Raises
-    ------
-    ValueError
-        If the `object_name` is not 'target' or 'chaser' (case-insensitive).
+        ValueError
+            If the `object_name` is not 'target' or 'chaser' (case-insensitive).
     """
     if object_name.lower() == "target":
         prefix = "t"
@@ -748,62 +742,25 @@ def _get_creation_date(self, time_to_tca: Union[int, float], date_tca: datetime)
     """
     Calculates the creation date by subtracting the time to TCA (in days) from the TCA date.
 
-    Parameters
-    ----------
-    time_to_tca : int or float
-        The time to Time of Closest Approach (TCA) in days.
-    date_tca : datetime
-        The datetime of the Time of Closest Approach.
+    Args:
+        time_to_tca : int or float
+            The time to Time of Closest Approach (TCA) in days.
+        date_tca : datetime
+            The datetime of the Time of Closest Approach.
 
     Returns
-    -------
-    datetime
-        The calculated creation date.
+        datetime
+            The calculated creation date.
     """
     return date_tca - timedelta(days=time_to_tca)
 
 
-# Uncomment and use the following if needed:
-# import functools
-# from datetime import datetime
-
-# @functools.lru_cache(maxsize=None)
-# def _from_date_str_to_days(
-#     self,
-#     cdm_date: str,
-#     date0: Union[str, datetime] = "2020-05-22T21:41:31.975",
-#     date_format: str = "%Y-%m-%dT%H:%M:%S.%f",
-# ) -> float:
-#     """
-#     Converts a CDM date string to the number of days (including fractional days) elapsed since a reference date.
-#
-#     Parameters
-#     ----------
-#     cdm_date : str
-#         The date string to convert, formatted according to `date_format`.
-#     date0 : str or datetime, optional
-#         The reference start date as a string or datetime object. Defaults to "2020-05-22T21:41:31.975".
-#     date_format : str, optional
-#         The format string to parse `cdm_date`. Defaults to ISO-like "%Y-%m-%dT%H:%M:%S.%f".
-#
-#     Returns
-#     -------
-#     float
-#         Number of days (including fractional days) between `cdm_date` and `date0`.
-#     """
-#     if isinstance(date0, str):
-#         date0 = datetime.strptime(date0, date_format)
-#     cdm_datetime = datetime.strptime(cdm_date, date_format)
-#     delta = cdm_datetime - date0
-#     days = delta.days
-#     days_fraction = (delta.seconds + delta.microseconds / 1e6) / (60 * 60 * 24)
-#     return days + days_fraction
 
 
 class CSVWriter(Writer):
     """CSV writer for a dataset.
 
-    Parameters:
+    Args:
         path (str): path to write the dataset.
     """
 
@@ -816,13 +773,11 @@ def write(self, data: pd.DataFrame) -> None:
     """
     Write a pandas DataFrame to a CSV file at the specified dataset path.
 
-    Parameters
-    ----------
-    data : pd.DataFrame
-        The DataFrame to write to the CSV file.
+    Args:
+        data : pd.DataFrame
+            The DataFrame to write to the CSV file.
 
-    Returns
-    -------
-    None
+    Returns:
+        None
     """
     data.to_csv(self.path, index=False)
