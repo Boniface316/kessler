@@ -8,7 +8,14 @@ import numpy as np
 import pandas as pd
 from pydantic import BaseModel, field_validator
 
-from .__keys import data_covariance, data_od, data_state, header, metadata, relative_metadata
+from .__keys import (
+    data_covariance_list,
+    data_od_list,
+    data_state_list,
+    header_list,
+    object_metadata_list,
+    relative_metadata_list,
+)
 from ._CDM import CDM
 from ._utils import _add_days_to_date_str, _from_date_str_to_days
 
@@ -46,12 +53,15 @@ class Event(BaseModel, arbitrary_types_allowed=True):
     def copy(self):
         return Event(cdms=copy.deepcopy(self.cdms))
 
-    def to_dataframe(self):
+    def to_dataframe(self, drop_columns=None):
         if self.data_frame is None:
             self.data_frame = [cdm.to_dataframe() for cdm in self.cdms]
             self.data_frame = pd.concat(self.data_frame, ignore_index=True)
         else:
             loguru.logger.warning("DataFrame already exists, returning the existing one.")
+
+        if drop_columns:
+            self.data_frame = self.data_frame.drop(columns=drop_columns, errors="ignore")
 
         return self.data_frame
 
@@ -105,12 +115,12 @@ class EventDataset(BaseModel):
     def from_pandas(
         df,
         groups_events_by="EVENT_ID",
-        header=header,
-        relative_metadata=relative_metadata,
-        object_metadata=metadata,
-        data_state=data_state,
-        data_od=data_od,
-        data_covariance=data_covariance,
+        header=header_list,
+        relative_metadata=relative_metadata_list,
+        object_metadata=object_metadata_list,
+        data_state=data_state_list,
+        data_od=data_od_list,
+        data_covariance=data_covariance_list,
         from_date_str_to_days=_from_date_str_to_days,
     ):
         loguru.logger.info(f"Dataframe with {len(df)} rows and {len(df.columns)} columns")
@@ -196,10 +206,10 @@ class EventDataset(BaseModel):
             events.append(Event(cdms=cdms))
         return EventDataset(events=events)
 
-    def to_dataframe(self):
+    def to_dataframe(self, drop_columns=None):
         event_dataframes = []
         for event in self.events:
-            event_dataframes.append(event.to_dataframe())
+            event_dataframes.append(event.to_dataframe(drop_columns=drop_columns))
         return pd.concat(event_dataframes, ignore_index=True)
 
     def dates(self, _add_days_to_date_str=_add_days_to_date_str):
