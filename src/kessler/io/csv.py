@@ -21,6 +21,7 @@ from ._base import Lineage, Reader, Writer
 from ._CDM import CDM
 from ._event import Event, EventDataset
 from ._utils import _from_date_str_to_days
+from .schemas import InputsSchema
 
 
 class CSVReader(Reader):
@@ -54,12 +55,15 @@ class CSVReader(Reader):
         "validate",
     ]
 
-    def read(self, columns_to_keep) -> pd.DataFrame:
+    def read(self, columns_to_keep=None) -> pd.DataFrame:
         if os.path.exists(self.path):
             data = pd.read_csv(self.path)
         else:
             loguru.logger.info(f"File not found at {self.path}. Downloading from {self.url}.")
             data = self._download_data()
+
+        if columns_to_keep is None:
+            columns_to_keep = dir(InputsSchema)
 
         columns_to_keep = [col for col in columns_to_keep if col not in self.non_column_names]
         columns_to_keep = [col for col in columns_to_keep if not col.startswith("_")]
@@ -68,6 +72,7 @@ class CSVReader(Reader):
             loguru.logger.warning(
                 f"The following columns are not in the dataframe: {missing_columns}"
             )
+        breakpoint()
         columns_to_keep = [col for col in columns_to_keep if col in data.columns]
         data = data[columns_to_keep]
         data = data.dropna()
@@ -180,10 +185,10 @@ class CSVReader(Reader):
         TCA_days = _from_date_str_to_days(TCA, first_date_of_event)
         DAYS_TO_TCA = TCA_days - creation_date_in_days
 
-        header = self._get_header(self, event_id, creation_date_str)
+        header = self._get_header(event_id, creation_date_str)
         values_extra = self._get_values_extra(creation_date_in_days, TCA_days, DAYS_TO_TCA)
 
-        relative_metadata = self._get_relative_metadata(single_cdm_data)
+        relative_metadata = self._get_relative_metadata(single_cdm_data, TCA)
 
         target_metadata = self._get_object_metadata(self.OBJECT_1, single_cdm_data)
         target_data_od = self._get_data_od("t", single_cdm_data, creation_date)
