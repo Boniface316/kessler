@@ -7,19 +7,16 @@ import typing as T
 import mlflow
 import pydantic as pdt
 
-from ._base import Job, Locals
-from ..services import MlflowService
 from ..io import ReaderKind
-from ..models import ModelKind, ExampleModel
-from ..metrics import MetricKind, ExampleMetric
-from ..io.splitters import SplitterKind, ExampleSplitter
 from ..io.schemas import InputsSchema, TargetsSchema
-from ..searchers import SearcherKind, ExampleSearcher
-
-
+from ..io.splitters import ExampleSplitter, SplitterKind
+from ..metrics import ExampleMetric, MetricKind
+from ..models import ExampleModel, ModelKind
+from ..searchers import ExampleSearcher, SearcherKind
+from ..services import MlflowService
+from ._base import Job, Locals
 
 # %% JOBS
-
 
 
 class TuningJob(Job):
@@ -47,9 +44,7 @@ class TuningJob(Job):
     # Metric
     metric: MetricKind = pdt.Field(ExampleMetric(), discriminator="KIND")
     # splitter
-    splitter: SplitterKind = pdt.Field(
-        ExampleSplitter(), discriminator="KIND"
-    )
+    splitter: SplitterKind = pdt.Field(ExampleSplitter(), discriminator="KIND")
     # Searcher
     searcher: SearcherKind = pdt.Field(
         ExampleSearcher(),
@@ -70,12 +65,13 @@ class TuningJob(Job):
             # - inputs
             logger.info("Read inputs: {}", self.inputs)
             inputs_ = self.inputs.read()  # unchecked!
-            inputs = InputsSchema.check(inputs_)
+            breakpoint()
+            inputs = InputsSchema.check(inputs_.to_dataframe(drop_columns=["CCSDS_CDM_VERS"]))
             logger.debug("- Inputs shape: {}", inputs.shape)
             # - targets
             logger.info("Read targets: {}", self.targets)
             targets_ = self.targets.read()  # unchecked!
-            targets = TargetsSchema.check(targets_)
+            targets = TargetsSchema.check(targets_.to_dataframe())
             logger.debug("- Targets shape: {}", targets.shape)
             # lineage
             # - inputs

@@ -3,22 +3,20 @@
 # %% IMPORTS
 
 import typing as T
-import os
+
 import mlflow
 import pydantic as pdt
 
-from ._base import Locals, Job
-
-from ..services import MlflowService
-from ..signers import SignerKind, ExampleSigner
-from ..models import ModelKind, ExampleModel
-from ..metrics import MetricsKind, ExampleMetric
 from ..io import ReaderKind
-
-from ..io.splitters import SplitterKind
+from ..io.schemas import Inputs, InputsSchema, Targets, TargetsSchema
 from ..io.splitters import ExampleSplitter as TrainTestSplitter
-from ..io.schemas import Inputs, Targets, InputsSchema, TargetsSchema
-from ..registries import SaverKind, CustomSaver, RegisterKind, MlflowRegister
+from ..io.splitters import SplitterKind
+from ..metrics import ExampleMetric, MetricsKind
+from ..models import ExampleModel, ModelKind
+from ..registries import CustomSaver, MlflowRegister, RegisterKind, SaverKind
+from ..services import MlflowService
+from ..signers import ExampleSigner, SignerKind
+from ._base import Job, Locals
 
 # %% JOBS
 
@@ -75,12 +73,12 @@ class TrainingJob(Job):
             # - inputs
             logger.info("Read inputs: {}", self.inputs)
             inputs_ = self.inputs.read()  # unchecked!
-            inputs = InputsSchema.check(inputs_)
+            inputs = InputsSchema.check(inputs_.to_dataframe())
             logger.debug("- Inputs shape: {}", inputs.shape)
             # - targets
             logger.info("Read targets: {}", self.targets)
             targets_ = self.targets.read()  # unchecked!
-            targets = TargetsSchema.check(targets_)
+            targets = TargetsSchema.check(targets_.to_dataframe())
             logger.debug("- Targets shape: {}", targets.shape)
             # lineage
             # - inputs
@@ -98,9 +96,7 @@ class TrainingJob(Job):
             # splitter
             logger.info("With splitter: {}", self.splitter)
             # - index
-            train_index, test_index = next(
-                self.splitter.split(inputs=inputs, targets=targets)
-            )
+            train_index, test_index = next(self.splitter.split(inputs=inputs, targets=targets))
             # - inputs
             inputs_train = T.cast(Inputs, inputs.iloc[train_index])
             inputs_test = T.cast(Inputs, inputs.iloc[test_index])
