@@ -15,7 +15,7 @@ import uuid
 import os
 import pandas as pd
 
-from kessler import EventDataset
+from original import EventDataset
 
 
 class EventDatasetTestCase(unittest.TestCase):
@@ -30,7 +30,7 @@ class EventDatasetTestCase(unittest.TestCase):
 
 """
         file_name = os.path.join(tempfile.mkdtemp(), str(uuid.uuid4()))
-        with open(file_name, 'w') as f:
+        with open(file_name, "w") as f:
             f.write(file_content)
 
         df = pd.read_csv(file_name)  # Read the csv
