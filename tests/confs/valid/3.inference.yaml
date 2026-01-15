@@ -1,0 +1,9 @@
+job:
+  KIND: InferenceJob
+  inputs:
+    KIND: CSVReader
+    path: "${tests_path:}/data/inputs_sample.csv"
+    limit: 1500
+  outputs:
+    KIND: CSVWriter
+    path: "${tmp_path:}/outputs_sample.csv"
